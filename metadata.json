@@ -1,0 +1,8 @@
+{
+  "name": "Audit Intelligence USA Tax V2.3",
+  "description": "Sistema integral de auditoría fiscal en USA, radicación de casos $150, asignación CPA $45, contratos, firma digital y matriz financiera BHD 08694150021.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
