@@ -1,0 +1,131 @@
+generator client { provider = "prisma-client-js" }
+datasource db { provider = "sqlite" url = "file:./dev.db" }
+
+model CPA_Afiliado {
+  id String @id @default(cuid())
+  nombreCompleto String
+  email String @unique
+  licenciaNumero String @unique
+  codigoRegistro String @unique // ESTE ES = TU LICENCIA. Ej: CPA-NY-12345
+  estadoLicencia String // JSON ["NY","NJ"]
+  estadoPrincipal String
+  firmaDigitalUrl String // Firma PNG
+  credencialPTIN String
+  verificado Boolean @default(false)
+  comisionFija Float @default(45.00) // $45 por caso aprobado y cobrado
+  balancePendiente Float @default(0)
+  casosFirmados Int @default(0)
+  totalGanado Float @default(0)
+  activo Boolean @default(true)
+  fechaAfiliacion DateTime @default(now())
+  casos CasoTax[]
+}
+// /prisma/schema.prisma - AGREGA ESTO
+
+enum Role {
+  ADMIN // Tú - Pedro Baldera - Ves todo
+  MANAGER // Gerente - Asigna casos
+  SOCIO // Partner - Ve reportes preliminares y finales
+  CPA_AFILIADO // Contador Autorizado por Estado - Firma y cobra comisión
+  CLIENTE
+}
+
+model CPA_Afiliado {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  // DATOS LEGALES - PARA FIRMA
+  nombreCompleto  String   // Ej: John Smith, CPA
+  licenciaNumero  String   @unique // Ej: CPA-12345 NY - ESTE SERÁ SU CÓDIGO DE REGISTRO
+  estadoLicencia  String[] // ["NY","NJ","CA"] - Estados donde puede firmar
+  estadoPrincipal String   // Ej: NY
+  firmaDigitalUrl String   // PNG de su firma guardada en S3/Vercel Blob
+  selloCPAUrl     String   // Sello circular del CPA
+  credencialPTIN  String   // IRS PTIN Number
+  credencialEFIN  String?  // EFIN si tiene
+  // VERIFICACIÓN
+  verificado      Boolean  @default(false)
+  documentoLicenciaUrl String // Foto de licencia estatal
+  fechaVencimiento DateTime
+  // COMISIÓN
+  comisionPorcentaje Float @default(30.0) // 30% por cada caso firmado
+  comisionFija    Float @default(45.00) // O $45 fijo - Eliges
+  balancePendiente Float @default(0)
+  // HISTÓRICO
+  casosFirmados   Int      @default(0)
+  totalGanado     Float    @default(0)
+  fechaAfiliacion DateTime @default(now())
+  activo          Boolean  @default(true)
+  
+  casos           CasoTax[]
+}
+
+model CasoTax {
+  id              String   @id @default(cuid())
+  clienteId       String
+  anioFiscal      Int
+  estados         String[] // ["AL","NY"]
+  status          String   // PRELIMINAR, PENDIENTE_FIRMA, FIRMADO, COBRADO, ENTREGADO
+  // FLUJO DE FIRMA
+  cpaAsignadoId   String?
+  cpaAsignado     CPA_Afiliado? @relation(fields: [cpaAsignadoId], references: [id])
+  firmadoEn       DateTime?
+  ipFirma         String? // Para auditoría
+  // REPORTES
+  reportePreliminarUrl String? // Solo ADMIN/CPA pueden ver
+  reporteFinalUrl      String? // Cliente ve solo después de pago
+  // PAGO Y COMISIÓN
+  montoCobrado    Float
+  comisionCPA     Float
+  pagadoA_CPA     Boolean  @default(false)
+  // HIGHUB
+  highubFolderId  String?
+  highubSubido    Boolean @default(false)
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Caso {
+  id              String    @id @default(uuid())
+  cliente         String
+  estado          String    // Ejemplo: "NY", "DO"
+  formulario      String    @default("1040")
+  pdfOriginalPath String
+  pdfFirmadoUrl   String?   // URL persistente del archivo final
+  estatus         String    @default("PENDIENTE") // PENDIENTE o FIRMADO
+  fechaFirma      DateTime?
+  ipAuditoria     String?
+  codigoCpaFirma  String?
+  comision        Comision?
+}
+
+model Comision {
+  id             String   @id @default(uuid())
+  fechaRegistro  DateTime @default(now())
+  añoFiscal      String
+  monto          Decimal  @default(45.00)
+  codigoCpa      String
+  casoId         String   @unique
+  caso           Caso     @relation(fields: [casoId], references: [id])
+}
+
+model CasoTax {
+  id String @id @default(cuid())
+  clienteNombre String
+  anioFiscal Int
+  estados String
+  status String @default("PRELIMINAR") // PRELIMINAR=CONFIDENCIAL solo ADMIN/CPA
+  cpaAsignadoId String?
+  cpaAsignado CPA_Afiliado? @relation(fields: [cpaAsignadoId], references: [id])
+  montoCobrado Float
+  comisionCPA Float @default(45.0)
+  reporteFinalUrl String?
+  highubSubido Boolean @default(false)
+  firmadoEn DateTime?
+}
