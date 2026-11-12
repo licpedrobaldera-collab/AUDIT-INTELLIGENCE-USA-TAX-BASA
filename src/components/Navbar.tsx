@@ -17,7 +17,8 @@ import {
   CreditCard,
   ChevronDown,
   RotateCcw,
-  Sparkles
+  Sparkles,
+  HardDrive
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -40,6 +41,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCambiarClave }) => {
   const navLinks = [
     { label: 'Radicar Tax $150', route: '/tax', icon: FileText, badge: '$150' },
     { label: 'CPA Dashboard', route: '/cpa/dashboard', icon: LayoutDashboard },
+    { label: 'Google Drive', route: '/drive', icon: HardDrive, badge: 'Vault' },
     ...(currentUser?.rol === 'ADMIN' || currentUser?.rol === 'DEV'
       ? [{ label: 'Matriz Liquidación', route: '/admin/matriz', icon: FileSpreadsheet, badge: 'Admin' }]
       : []),

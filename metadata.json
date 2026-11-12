@@ -1,8 +1,8 @@
 {
   "name": "AUDIT INTELLIGENCE USA - Tax & CPA Platform",
   "description": "Sistema contable y de firma digital de formularios 1040 con gestión de CPAs afiliados, comisiones de $45 y archivo HIGHUB.",
-  "permissions": [],
-  "capabilities": [
+  "requestFramePermissions": [],
+  "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
   ]
 }

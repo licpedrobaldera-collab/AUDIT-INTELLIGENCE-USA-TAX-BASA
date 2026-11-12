@@ -14,6 +14,7 @@ import { HistorialView } from './views/HistorialView';
 import { DirectorioView } from './views/DirectorioView';
 import { LoginView } from './views/LoginView';
 import { RegistroView } from './views/RegistroView';
+import { GoogleDriveManagerView } from './views/GoogleDriveManagerView';
 
 import { ShieldCheck, Heart } from 'lucide-react';
 
@@ -37,6 +38,8 @@ const AppContent: React.FC = () => {
         return <TaxIntakeView />;
       case '/cpa/dashboard':
         return <CPADashboardView />;
+      case '/drive':
+        return <GoogleDriveManagerView />;
       case '/admin/matriz':
         return <AdminMatrizView />;
       case '/historial':
