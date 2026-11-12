@@ -117,66 +117,52 @@ export const AdminMatrizView: React.FC = () => {
         </div>
       </div>
 
-      {/* Primary Financial Banner matching user specs exactly:
-          BALANCE OCT 2026: Cobrado $15,000 (100x$150) | Pagado $3,600 (80x$45) | Por Pagar $900 | NETO BHD $10,500 | NY $3,800 FL $2,200
-      */}
+      {/* Primary Financial Banner */}
       <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-emerald-50 border-2 border-blue-200 rounded-3xl p-6 sm:p-7 shadow-sm space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-200/60 pb-3">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
             <span className="font-extrabold text-sm sm:text-base text-slate-900 tracking-tight">
-              BALANCE OCT 2026 (AUDIT INTELLIGENCE USA TAX LLC)
+              MATRIZ CONCILIADA DE LIQUIDACIÓN Y FONDOS
             </span>
           </div>
           <span className="font-mono text-xs text-blue-700 font-bold bg-white px-3 py-1 rounded-lg border border-blue-200 shadow-2xs">
-            Cuenta Matriz: Banco BHD 08694150021
+            Bóveda de Desembolsos Oficial
           </span>
         </div>
 
-        {/* Highlight row with values matching prompt */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-xs">
+        {/* Live Metrics based 100% on actual cases */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
           <div className="bg-white p-4 rounded-2xl border border-blue-100 shadow-2xs">
-            <span className="text-slate-400 block font-semibold uppercase text-[10px]">Cobrado Total</span>
+            <span className="text-slate-400 block font-semibold uppercase text-[10px]">Cobrado Total ($150)</span>
             <div className="text-xl font-black text-slate-900 mt-0.5">
-              ${financialStats.totalCobrado.toLocaleString()}
+              ${financialStats.totalCobrado.toLocaleString()} USD
             </div>
-            <span className="text-[11px] text-slate-500 font-mono">(100x$150)</span>
+            <span className="text-[11px] text-slate-500 font-mono">({cases.length} casos reales)</span>
           </div>
 
           <div className="bg-white p-4 rounded-2xl border border-emerald-100 shadow-2xs">
-            <span className="text-emerald-600 block font-semibold uppercase text-[10px]">Pagado CPAs</span>
+            <span className="text-emerald-600 block font-semibold uppercase text-[10px]">Pagado a CPAs</span>
             <div className="text-xl font-black text-emerald-700 mt-0.5">
-              ${financialStats.totalPagado.toLocaleString()}
+              ${financialStats.totalPagado.toLocaleString()} USD
             </div>
-            <span className="text-[11px] text-slate-500 font-mono">(80x$45)</span>
+            <span className="text-[11px] text-slate-500 font-mono">({payouts.length} desembolsos)</span>
           </div>
 
           <div className="bg-white p-4 rounded-2xl border border-amber-100 shadow-2xs">
-            <span className="text-amber-600 block font-semibold uppercase text-[10px]">Por Pagar</span>
+            <span className="text-amber-600 block font-semibold uppercase text-[10px]">Por Pagar a CPAs</span>
             <div className="text-xl font-black text-amber-600 mt-0.5">
-              ${financialStats.totalPorPagar.toLocaleString()}
+              ${financialStats.totalPorPagar.toLocaleString()} USD
             </div>
-            <span className="text-[11px] text-amber-700 font-medium">Comisiones</span>
+            <span className="text-[11px] text-amber-700 font-medium">Listos para Liquidación</span>
           </div>
 
           <div className="bg-white p-4 rounded-2xl border border-blue-200 shadow-2xs">
-            <span className="text-blue-700 block font-semibold uppercase text-[10px]">NETO BHD</span>
+            <span className="text-blue-700 block font-semibold uppercase text-[10px]">Neto en Bóveda</span>
             <div className="text-xl font-black text-blue-700 mt-0.5">
-              ${financialStats.netoBHD.toLocaleString()}
+              ${financialStats.netoBHD.toLocaleString()} USD
             </div>
-            <span className="text-[11px] text-blue-600 font-mono font-medium">BHD 08694150021</span>
-          </div>
-
-          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-2xs col-span-2 md:col-span-1">
-            <span className="text-slate-400 block font-semibold uppercase text-[10px]">Desglose Estados</span>
-            <div className="text-xs font-bold text-slate-800 mt-1 space-y-0.5 font-mono">
-              <div className="flex justify-between">
-                <span>NY:</span> <span className="text-blue-700">$3,800</span>
-              </div>
-              <div className="flex justify-between">
-                <span>FL:</span> <span className="text-emerald-700">$2,200</span>
-              </div>
-            </div>
+            <span className="text-[11px] text-blue-600 font-mono font-medium">Fondo de Reserva</span>
           </div>
         </div>
       </div>
@@ -324,9 +310,7 @@ export const AdminMatrizView: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {cpaList.map(cpa => {
-                const pendingAmount = getCpaPending(cpa.id, cpa.codigoCPA);
-                // Simulated fallback if Pedro Baldera
-                const finalPending = cpa.codigoCPA === 'CPA-NY-12345' && pendingAmount === 0 ? 135 : pendingAmount;
+                const finalPending = getCpaPending(cpa.id, cpa.codigoCPA);
 
                 return (
                   <tr key={cpa.id} className="hover:bg-slate-50 transition-colors">

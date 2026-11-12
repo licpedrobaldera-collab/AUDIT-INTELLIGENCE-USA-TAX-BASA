@@ -36,11 +36,16 @@ export const DirectorioView: React.FC = () => {
   };
 
   const statesConfig: Array<{ code: USState; label: string; icon: string }> = [
-    { code: 'NY', label: 'NY - 5 Firmas', icon: '🗽' },
-    { code: 'FL', label: 'FL - 3 Firmas', icon: '☀️' },
-    { code: 'TX', label: 'TX - 2 Firmas', icon: '🤠' },
-    { code: 'NJ', label: 'NJ - 2 Firmas', icon: '🌊' },
-    { code: 'RD', label: 'RD - 2 Firmas', icon: '🌴' },
+    { code: 'NY', label: 'New York (NY)', icon: '🗽' },
+    { code: 'FL', label: 'Florida (FL)', icon: '☀️' },
+    { code: 'TX', label: 'Texas (TX)', icon: '🤠' },
+    { code: 'CA', label: 'California (CA)', icon: '🌴' },
+    { code: 'NJ', label: 'New Jersey (NJ)', icon: '🌊' },
+    { code: 'IL', label: 'Illinois (IL)', icon: '🏙️' },
+    { code: 'PA', label: 'Pennsylvania (PA)', icon: '🔔' },
+    { code: 'GA', label: 'Georgia (GA)', icon: '🍑' },
+    { code: 'PR', label: 'Puerto Rico (PR)', icon: '🇵🇷' },
+    { code: 'RD', label: 'Rep. Dominicana (Expat/Intl)', icon: '🌴' },
   ];
 
   return (

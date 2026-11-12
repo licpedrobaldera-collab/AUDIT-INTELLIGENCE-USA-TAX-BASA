@@ -84,10 +84,10 @@ const AppContent: React.FC = () => {
           <div className="space-y-1">
             <div className="font-extrabold text-white flex items-center justify-center sm:justify-start gap-1.5">
               <ShieldCheck className="w-4 h-4 text-blue-400" />
-              <span>AUDIT-INTELLIGENCE USA TAX V2.3</span>
+              <span>AUDIT-INTELLIGENCE USA TAX</span>
             </div>
             <p className="text-[11px] font-mono text-slate-500">
-              Cuenta Matriz BHD: <span className="text-emerald-400 font-bold">08694150021</span> • IRC Sección 7216 & Treasury Circular 230
+              Cumplimiento IRS Circular 230 & IRC Sección 7216 • Sistema Criptográfico Multi-Jurisdicción
             </p>
           </div>
 

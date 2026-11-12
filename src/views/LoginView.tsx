@@ -233,8 +233,8 @@ export const LoginView: React.FC = () => {
               }}
               className="p-2 rounded-lg bg-slate-50 border border-slate-200 hover:bg-amber-50 hover:border-amber-300 text-left"
             >
-              <div className="font-bold text-slate-800">Admin Matriz</div>
-              <div className="text-slate-400 font-mono">BHD 08694150021</div>
+              <div className="font-bold text-slate-800">Administrador</div>
+              <div className="text-slate-400 font-mono">Panel Central</div>
             </button>
           </div>
         </div>

@@ -3,7 +3,6 @@ import { useApp } from '../context/AppContext';
 import {
   FileText,
   LayoutDashboard,
-  FileSpreadsheet,
   ShieldCheck,
   Building,
   LogIn,
@@ -16,140 +15,137 @@ import {
   CheckCircle2,
   DollarSign,
   TrendingUp,
-  FolderTree
+  FolderTree,
+  Send,
+  Zap
 } from 'lucide-react';
 
 export const HomeView: React.FC = () => {
-  const { navigate, financialStats, cases, users } = useApp();
+  const { navigate, cases, users } = useApp();
 
   const modules = [
     {
-      title: '/tax - Cliente $150 + Evidencias + Carpeta',
-      description: 'Radicación de expediente tributario 2024. Carga de hasta 8 soportes históricos, firma digital del contribuyente, cobro de $150 y asignación automática de CPA por estado.',
+      title: 'Radicar Caso Tributario ($150 USD)',
+      description: 'Radicación de expedientes tributarios reales para todos los estados de USA. Carga de soportes, firma digital del contribuyente, cobro de $150 y asignación inmediata de CPA.',
       route: '/tax',
       icon: FileText,
-      badge: 'Expedientes $150',
+      badge: '$150 Tarifa',
       color: 'bg-blue-600',
     },
     {
-      title: '/cpa/dashboard - CPA Dashboard',
-      description: 'Panel exclusivo del CPA (ej: CPA-NY-12345). Ver documentos online, descargar ZIP, editar notas de auditoría, borrar con log inmutable y firmar oficialmente bajo Circular 230.',
+      title: 'CPA Dashboard & Auditoría',
+      description: 'Panel exclusivo del CPA con distribución gráfica en tiempo real (Recharts: Realizadas vs. En Trámite vs. Aprobadas), examen de soportes online y firma oficial.',
       route: '/cpa/dashboard',
       icon: LayoutDashboard,
-      badge: 'Comisión $45',
+      badge: '$45 Comisión',
       color: 'bg-indigo-600',
     },
     {
-      title: '/admin/matriz - Matriz Maestra Admin BHD',
-      description: 'Consola gerencial de control financiero: Balance BHD 08694150021, desglose por estados (NY $3,800, FL $2,200), tabla de clientes, liquidación online de comisiones y exportación Excel/PDF.',
-      route: '/admin/matriz',
-      icon: FileSpreadsheet,
-      badge: 'BHD 08694150021',
-      color: 'bg-emerald-600',
-    },
-    {
-      title: '/historial - Realizadas / En Trámite / Aprobadas',
-      description: 'Filtrado multidimensional por estados (NY, FL, NJ, TX, RD) con conteos dinámicos en pestañas (ej: NY 12/8/45) y rastreo de ruta de archivos /2024/{ESTADO}/CASO/.',
+      title: 'Historial de Expedientes',
+      description: 'Monitoreo de expedientes reales clasificados por estado (todos los estados de USA) y fases de auditoría con rastreo de bóveda criptográfica.',
       route: '/historial',
       icon: ShieldCheck,
-      badge: 'Auditoría',
+      badge: 'Auditoría Real',
       color: 'bg-amber-600',
     },
     {
-      title: '/directorio - Firmas por Estado & Contacto',
-      description: 'Directorio oficial de CPAs y firmas contables acreditadas con PTIN, licencia, verificación bancaria y enlace directo a WhatsApp y correo electrónico.',
+      title: 'Directorio de Firmas y CPAs',
+      description: 'Red nacional de contadores públicos certificados con licencia y PTIN activo. Contacto directo por WhatsApp y correo electrónico.',
       route: '/directorio',
       icon: Building,
-      badge: 'Firmas Certificadas',
+      badge: 'CPAs Acreditados',
       color: 'bg-purple-600',
     },
     {
-      title: '/login & /registro - Multi-Rol',
-      description: 'Autenticación universal por Email, Teléfono o Cédula/ID. Registro para CLIENTE, CONTADOR (con PTIN y cuenta de comisiones), FIRMA, ADMIN y DEV.',
+      title: 'Acceso Seguro y Registro de Cuentas',
+      description: 'Portal de autenticación y alta de cuentas para Contribuyentes (Clientes), Contadores Públicos Autorizados (CPAs) y Despachos Contables.',
+      route: '/registro',
+      icon: UserPlus,
+      badge: 'Clientes & CPAs',
+      color: 'bg-emerald-600',
+    },
+    {
+      title: 'Iniciar Sesión',
+      description: 'Acceso directo con Email, Teléfono o Identificación oficial y clave segura para consultar expedientes o gestionar auditorías.',
       route: '/login',
       icon: LogIn,
-      badge: 'Roles & Seguridad',
+      badge: 'Multi-Dispositivo',
       color: 'bg-slate-800',
     },
   ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* Hero Welcome Banner */}
+      {/* Hero Welcome Banner - Clean Professional Presentation */}
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-8 sm:p-10 text-white shadow-xl border border-slate-800 relative overflow-hidden">
         <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-blue-500/10 blur-3xl pointer-events-none"></div>
 
         <div className="relative z-10 max-w-3xl space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/30 text-xs font-semibold">
             <Shield className="w-3.5 h-3.5 text-blue-400" />
-            <span>Versión 2.3 Producción • Cumplimiento IRS Circular 230</span>
+            <span>Plataforma Oficial de Gestión Tributaria en USA • Cumplimiento IRS Circular 230</span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-            AUDIT-INTELLIGENCE USA TAX V2.3
+            AUDIT-INTELLIGENCE USA TAX
           </h1>
 
           <p className="text-base sm:text-lg text-slate-300 leading-relaxed">
-            Sistema integral de radicación tributaria, gestión de expedientes digitalizados en carpetas históricas, 
-            contratos con firma electrónica, asignación automática de CPAs y matriz financiera centralizada en 
-            <strong className="text-emerald-400 font-mono"> Banco BHD Cuenta 08694150021</strong>.
+            Sistema integral de radicación tributaria, expedientes digitalizados en bóveda segura, contratos con firma electrónica legal (ESIGN/UETA) y asignación a Contadores Públicos Autorizados (CPAs) certificados para todos los estados de los Estados Unidos.
           </p>
 
           {/* Device Readiness Badges */}
-          <div className="pt-2 flex flex-wrap items-center gap-4 text-xs font-medium text-slate-300">
+          <div className="pt-2 flex flex-wrap items-center gap-3 text-xs font-medium text-slate-300">
             <span className="flex items-center gap-1.5 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700">
-              <Laptop className="w-4 h-4 text-blue-400" /> Compatible PC & Desktop
+              <Laptop className="w-4 h-4 text-blue-400" /> PC & Laptop
             </span>
             <span className="flex items-center gap-1.5 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700">
-              <Tablet className="w-4 h-4 text-indigo-400" /> Optimizado Tablet & iPad
+              <Tablet className="w-4 h-4 text-indigo-400" /> Tablet & iPad
             </span>
             <span className="flex items-center gap-1.5 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700">
-              <Smartphone className="w-4 h-4 text-emerald-400" /> 100% Celular / Móvil
+              <Smartphone className="w-4 h-4 text-emerald-400" /> Móvil & Celular
+            </span>
+            <span className="flex items-center gap-1.5 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700">
+              <Zap className="w-4 h-4 text-yellow-400" /> Compatible API / Web / Streamlit
             </span>
           </div>
         </div>
       </div>
 
-      {/* Real-Time Financial Metric Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Cobrado Total ($150)</div>
-          <div className="text-2xl font-black text-slate-900 mt-1">
-            ${financialStats.totalCobrado.toLocaleString()} <span className="text-xs font-normal text-slate-500">USD</span>
+      {/* Call to Action: Fast Launch for Clients and CPAs */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-gradient-to-br from-blue-600 to-indigo-700 text-white p-6 rounded-2xl shadow-md flex items-center justify-between">
+          <div className="space-y-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-blue-200">Para Contribuyentes</span>
+            <h3 className="text-lg font-black">Radicar mi Declaración ($150 USD)</h3>
+            <p className="text-xs text-blue-100 max-w-sm">
+              Sube tus documentos fiscales (W-2, 1099, ID), firma digitalmente y asigna tu caso a un CPA oficial.
+            </p>
           </div>
-          <div className="text-[11px] text-emerald-600 font-medium flex items-center gap-1 mt-1">
-            <TrendingUp className="w-3.5 h-3.5" /> 100 Casos Radicados
-          </div>
+          <button
+            onClick={() => navigate('/tax')}
+            className="px-4 py-2.5 bg-white text-blue-700 font-bold text-xs rounded-xl hover:bg-blue-50 transition-all shadow-xs shrink-0 flex items-center gap-1"
+          >
+            <span>Radicar Ahora</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pagado CPAs ($45)</div>
-          <div className="text-2xl font-black text-emerald-700 mt-1">
-            ${financialStats.totalPagado.toLocaleString()} <span className="text-xs font-normal text-slate-500">USD</span>
+        <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-6 rounded-2xl shadow-md flex items-center justify-between border border-slate-700">
+          <div className="space-y-1">
+            <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Para Contadores Públicos (CPAs)</span>
+            <h3 className="text-lg font-black">Panel de Auditoría & Comisiones ($45 USD)</h3>
+            <p className="text-xs text-slate-300 max-w-sm">
+              Revisa expedientes asignados, analiza la distribución con gráficos Recharts y aprueba declaraciones con tu firma.
+            </p>
           </div>
-          <div className="text-[11px] text-slate-500 font-medium mt-1">
-            80 Liquidaciones Efectuadas
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Por Pagar Comisiones</div>
-          <div className="text-2xl font-black text-amber-600 mt-1">
-            ${financialStats.totalPorPagar.toLocaleString()} <span className="text-xs font-normal text-slate-500">USD</span>
-          </div>
-          <div className="text-[11px] text-amber-700 font-medium mt-1">
-            Listos para Pagar Online
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
-          <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">NETO BHD 08694150021</div>
-          <div className="text-2xl font-black text-blue-700 mt-1">
-            ${financialStats.netoBHD.toLocaleString()} <span className="text-xs font-normal text-slate-500">USD</span>
-          </div>
-          <div className="text-[11px] text-blue-600 font-medium mt-1 font-mono">
-            Balance Conciliado
-          </div>
+          <button
+            onClick={() => navigate('/cpa/dashboard')}
+            className="px-4 py-2.5 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-500 transition-all shadow-xs shrink-0 flex items-center gap-1"
+          >
+            <span>Ir a Panel</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
@@ -158,9 +154,9 @@ export const HomeView: React.FC = () => {
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
             <FolderTree className="w-5 h-5 text-blue-600" />
-            Módulos del Sistema V2.3
+            Módulos del Sistema Operativo
           </h2>
-          <span className="text-xs text-slate-500">Haga clic en cualquier módulo para acceder directamente</span>
+          <span className="text-xs text-slate-500">Accede directamente al módulo requerido</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -201,21 +197,18 @@ export const HomeView: React.FC = () => {
         </div>
       </div>
 
-      {/* Fast Instructions for PC / Tablet / Mobile */}
+      {/* Real Infrastructure Details */}
       <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 text-xs text-slate-700 space-y-3">
         <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-          Arquitectura Operativa V2.3
+          Arquitectura Operativa en Producción
         </h3>
         <p className="leading-relaxed">
-          Cada radicación genera de forma automática la estructura canónica de archivos:
+          Cada radicación genera de forma automática la estructura canónica de archivos en bóveda:
           <code className="mx-1 px-1.5 py-0.5 bg-white border border-slate-300 rounded font-mono text-blue-700">
             /2024/{'{ESTADO}'}/CASO-{'{ID}'}/
           </code>
-          conteniendo 8 documentos soportes históricos (W-2, 1099, Cédula/ID, deducciones, contrato). 
-          Los CPAs autorizados examinan el expediente online, descargan en formato ZIP o firman oficialmente para 
-          habilitar el desembolso de <strong className="text-emerald-700">$45.00 USD</strong> mediante la cuenta matriz
-          <strong> Banco BHD 08694150021</strong>.
+          conteniendo los soportes tributarios obligatorios. Los Contadores Públicos Autorizados (CPAs) con licencia activa auditan el expediente online, visualizan métricas estadísticas en tiempo real y firman electrónicamente para formalizar la liquidación de sus comisiones.
         </p>
       </div>
     </div>

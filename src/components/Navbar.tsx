@@ -39,8 +39,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCambiarClave }) => {
 
   const navLinks = [
     { label: 'Radicar Tax $150', route: '/tax', icon: FileText, badge: '$150' },
-    { label: 'CPA Dashboard', route: '/cpa/dashboard', icon: LayoutDashboard, roleRestricted: ['CONTADOR', 'ADMIN', 'DEV'] },
-    { label: 'Matriz Admin BHD', route: '/admin/matriz', icon: FileSpreadsheet, roleRestricted: ['ADMIN', 'DEV'] },
+    { label: 'CPA Dashboard', route: '/cpa/dashboard', icon: LayoutDashboard },
+    ...(currentUser?.rol === 'ADMIN' || currentUser?.rol === 'DEV'
+      ? [{ label: 'Matriz Liquidación', route: '/admin/matriz', icon: FileSpreadsheet, badge: 'Admin' }]
+      : []),
     { label: 'Historial', route: '/historial', icon: ShieldCheck },
     { label: 'Directorio Firmas', route: '/directorio', icon: Building },
   ];
@@ -52,7 +54,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCambiarClave }) => {
 
   return (
     <header className="sticky top-0 z-40 bg-slate-900 border-b border-slate-800 text-white shadow-md">
-      {/* Top micro-bar: Bank BHD 08694150021 Guarantee & Role Simulator */}
+      {/* Top micro-bar: IRS Circular 230 Guarantee & Quick Role Access */}
       <div className="bg-slate-950 px-4 py-1.5 border-b border-slate-800/80 text-[11px] text-slate-300">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -60,16 +62,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCambiarClave }) => {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
             </span>
-            <span className="font-semibold text-slate-200">AUDIT-INTELLIGENCE V2.3</span>
+            <span className="font-semibold text-slate-200">AUDIT-INTELLIGENCE USA TAX</span>
             <span className="text-slate-500">•</span>
-            <span className="font-mono text-emerald-400 font-medium">BHD Cuenta: 08694150021</span>
+            <span className="font-medium text-emerald-400">IRS Circular 230 Certified & IRC 7216</span>
             <span className="hidden sm:inline text-slate-500">•</span>
-            <span className="hidden sm:inline text-slate-400">IRS Circular 230 Certified & IRC 7216</span>
+            <span className="hidden sm:inline text-slate-400">Todos los Estados de USA (50 States + PR)</span>
           </div>
 
-          {/* Quick Demo Switcher */}
+          {/* Quick Access Switcher */}
           <div className="flex items-center gap-2">
-            <span className="text-slate-400 font-medium hidden md:inline">Probar rol:</span>
+            <span className="text-slate-400 font-medium hidden md:inline">Acceso rol:</span>
             <div className="flex items-center gap-1 bg-slate-900 px-1 py-0.5 rounded-md border border-slate-700">
               <button
                 onClick={() => switchRoleDemo('CONTADOR', 'user-cpa-ny-01')}
@@ -78,14 +80,14 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCambiarClave }) => {
                 }`}
                 title="CPA Pedro Baldera (NY)"
               >
-                CPA (NY)
+                CPA
               </button>
               <button
                 onClick={() => switchRoleDemo('ADMIN')}
                 className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
                   currentUser?.rol === 'ADMIN' ? 'bg-amber-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
                 }`}
-                title="Superintendente Admin BHD"
+                title="Administrador General"
               >
                 ADMIN
               </button>
@@ -94,25 +96,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCambiarClave }) => {
                 className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
                   currentUser?.rol === 'CLIENTE' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
                 }`}
-                title="Cliente Juan Perez"
+                title="Cliente Contribuyente"
               >
                 CLIENTE
-              </button>
-              <button
-                onClick={() => switchRoleDemo('FIRMA')}
-                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
-                  currentUser?.rol === 'FIRMA' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
-                }`}
-                title="Firma Contable"
-              >
-                FIRMA
               </button>
             </div>
 
             <button
               onClick={resetToDefaults}
               className="text-slate-400 hover:text-amber-300 p-1 rounded transition-colors"
-              title="Reiniciar datos iniciales"
+              title="Reiniciar a estado inicial"
             >
               <RotateCcw className="w-3.5 h-3.5" />
             </button>
@@ -133,10 +126,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCambiarClave }) => {
             </div>
             <div>
               <div className="font-extrabold text-base tracking-tight text-white flex items-center gap-1.5">
-                AUDIT-INTELLIGENCE <span className="text-blue-400 text-xs px-1.5 py-0.5 rounded bg-blue-900/50 border border-blue-500/40 font-mono">USA TAX V2.3</span>
+                AUDIT-INTELLIGENCE <span className="text-blue-400 text-xs px-1.5 py-0.5 rounded bg-blue-900/50 border border-blue-500/40 font-mono">USA TAX</span>
               </div>
               <p className="text-[11px] text-slate-400 -mt-0.5 font-mono">
-                BHD 08694150021 • Expedientes $150 • CPA $45
+                Radicación $150 • Comisión CPA $45 • 50 Estados USA
               </p>
             </div>
           </div>

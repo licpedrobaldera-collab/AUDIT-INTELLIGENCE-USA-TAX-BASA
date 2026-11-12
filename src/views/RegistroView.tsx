@@ -219,7 +219,7 @@ export const RegistroView: React.FC = () => {
 
           <div>
             <label className="block font-bold text-slate-700 mb-1">
-              Estado de Radicación / Jurisdicción:
+              Estado de Radicación / Jurisdicción (50 Estados USA + PR):
             </label>
             <select
               value={estado}
@@ -228,9 +228,38 @@ export const RegistroView: React.FC = () => {
             >
               <option value="NY">🗽 New York (NY)</option>
               <option value="FL">☀️ Florida (FL)</option>
-              <option value="NJ">🌊 New Jersey (NJ)</option>
               <option value="TX">🤠 Texas (TX)</option>
-              <option value="RD">🌴 Rep. Dominicana (RD)</option>
+              <option value="CA">🌴 California (CA)</option>
+              <option value="NJ">🌊 New Jersey (NJ)</option>
+              <option value="IL">🏙️ Illinois (IL)</option>
+              <option value="PA">🔔 Pennsylvania (PA)</option>
+              <option value="OH">🌾 Ohio (OH)</option>
+              <option value="GA">🍑 Georgia (GA)</option>
+              <option value="NC">🌲 North Carolina (NC)</option>
+              <option value="MI">🚗 Michigan (MI)</option>
+              <option value="VA">🏛️ Virginia (VA)</option>
+              <option value="WA">☕ Washington (WA)</option>
+              <option value="AZ">🌵 Arizona (AZ)</option>
+              <option value="MA">🎓 Massachusetts (MA)</option>
+              <option value="TN">🎸 Tennessee (TN)</option>
+              <option value="IN">🏎️ Indiana (IN)</option>
+              <option value="MO">⛵ Missouri (MO)</option>
+              <option value="MD">🦀 Maryland (MD)</option>
+              <option value="WI">🧀 Wisconsin (WI)</option>
+              <option value="CO">🏔️ Colorado (CO)</option>
+              <option value="MN">❄️ Minnesota (MN)</option>
+              <option value="SC">🏝️ South Carolina (SC)</option>
+              <option value="AL">🚀 Alabama (AL)</option>
+              <option value="LA">🎷 Louisiana (LA)</option>
+              <option value="KY">🐎 Kentucky (KY)</option>
+              <option value="OR">🌲 Oregon (OR)</option>
+              <option value="OK">⚡ Oklahoma (OK)</option>
+              <option value="CT">⚓ Connecticut (CT)</option>
+              <option value="UT">⛷️ Utah (UT)</option>
+              <option value="NV">🎰 Nevada (NV)</option>
+              <option value="PR">🇵🇷 Puerto Rico (PR)</option>
+              <option value="DC">🏛️ District of Columbia (DC)</option>
+              <option value="RD">🌴 República Dominicana (Expat/Intl)</option>
             </select>
           </div>
 

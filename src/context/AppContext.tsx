@@ -49,7 +49,7 @@ interface AppContextType {
   };
 }
 
-const STORAGE_KEY_PREFIX = 'audit_tax_v23_';
+const STORAGE_KEY_PREFIX = 'audit_tax_v24_real_';
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -537,7 +537,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Financial calculations
-  const totalCobrado = cases.reduce((acc, curr) => acc + (curr.montoCobrado || 150), 0) + (100 - cases.length > 0 ? (100 - cases.length) * 150 : 0);
+  // Real Financial calculations based 100% on actual cases
+  const totalCobrado = cases.reduce((acc, curr) => acc + (curr.montoCobrado || 150), 0);
   const totalPagado = payouts.reduce((acc, curr) => acc + curr.monto, 0);
   
   // Por pagar: casos en estado APROBADA con comision PENDIENTE
@@ -551,13 +552,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const casosEnTramite = cases.filter(c => c.status === 'EN_TRAMITE').length;
   const casosRealizadas = cases.filter(c => c.status === 'REALIZADA').length;
 
-  const porEstado: Record<USState, { cobrado: number; casos: number }> = {
-    NY: { cobrado: 3800, casos: cases.filter(c => c.estado === 'NY').length },
-    FL: { cobrado: 2200, casos: cases.filter(c => c.estado === 'FL').length },
-    TX: { cobrado: 1900, casos: cases.filter(c => c.estado === 'TX').length },
-    NJ: { cobrado: 1400, casos: cases.filter(c => c.estado === 'NJ').length },
-    RD: { cobrado: 1200, casos: cases.filter(c => c.estado === 'RD').length },
-  };
+  const porEstado: Record<string, { cobrado: number; casos: number }> = {};
+  cases.forEach(c => {
+    if (!porEstado[c.estado]) {
+      porEstado[c.estado] = { cobrado: 0, casos: 0 };
+    }
+    porEstado[c.estado].cobrado += (c.montoCobrado || 150);
+    porEstado[c.estado].casos += 1;
+  });
 
   return (
     <AppContext.Provider
@@ -585,14 +587,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         exportarExcelCSV,
         resetToDefaults,
         financialStats: {
-          totalCobrado: Math.max(15000, totalCobrado),
-          totalPagado: Math.max(3600, totalPagado),
+          totalCobrado,
+          totalPagado,
           totalPorPagar,
-          netoBHD: Math.max(10500, netoBHD),
+          netoBHD,
           casosAprobados,
           casosEnTramite,
           casosRealizadas,
-          porEstado,
+          porEstado: porEstado as any,
         },
       }}
     >

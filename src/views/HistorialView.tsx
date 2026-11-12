@@ -21,12 +21,12 @@ export const HistorialView: React.FC = () => {
   const [estadoFilter, setEstadoFilter] = useState<string>('NY');
   const [tab, setTab] = useState<'REALIZADA' | 'EN_TRAMITE' | 'APROBADA'>('REALIZADA');
 
-  // Calculate dynamic stats for the state dropdown like "NY (12/8/45)"
+  // Calculate real dynamic stats for the state dropdown
   const getStateCountString = (st: USState) => {
     const stCases = cases.filter(c => c.estado === st);
-    const r = stCases.filter(c => c.status === 'REALIZADA').length || 12;
-    const t = stCases.filter(c => c.status === 'EN_TRAMITE').length || 8;
-    const a = stCases.filter(c => c.status === 'APROBADA').length || 45;
+    const r = stCases.filter(c => c.status === 'REALIZADA').length;
+    const t = stCases.filter(c => c.status === 'EN_TRAMITE').length;
+    const a = stCases.filter(c => c.status === 'APROBADA').length;
     return `${st} (${r}/${t}/${a})`;
   };
 
@@ -61,12 +61,17 @@ export const HistorialView: React.FC = () => {
               onChange={e => setEstadoFilter(e.target.value)}
               className="w-full p-3 rounded-xl border border-slate-300 bg-slate-50 font-bold text-sm text-slate-900 focus:ring-2 focus:ring-blue-500 focus:outline-none"
             >
+              <option value="TODOS">Todos los Estados de USA</option>
               <option value="NY">{getStateCountString('NY')}</option>
               <option value="FL">{getStateCountString('FL')}</option>
-              <option value="NJ">{getStateCountString('NJ')}</option>
               <option value="TX">{getStateCountString('TX')}</option>
+              <option value="CA">{getStateCountString('CA')}</option>
+              <option value="NJ">{getStateCountString('NJ')}</option>
+              <option value="IL">{getStateCountString('IL')}</option>
+              <option value="PA">{getStateCountString('PA')}</option>
+              <option value="GA">{getStateCountString('GA')}</option>
+              <option value="PR">{getStateCountString('PR')}</option>
               <option value="RD">{getStateCountString('RD')}</option>
-              <option value="TODOS">Todos los Estados (USA & RD)</option>
             </select>
           </div>
 

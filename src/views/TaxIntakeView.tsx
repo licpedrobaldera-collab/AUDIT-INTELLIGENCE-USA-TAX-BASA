@@ -23,13 +23,13 @@ export const TaxIntakeView: React.FC = () => {
   const { crearCasoTax, navigate, setSelectedCaseForModal } = useApp();
 
   const [estado, setEstado] = useState<USState>('NY');
-  const [nombre, setNombre] = useState('Juan Perez');
-  const [email, setEmail] = useState('juan.perez.tax2024@email.com');
-  const [telefono, setTelefono] = useState('+1 (917) 555-0143');
-  const [ssnLast4, setSsnLast4] = useState('4192');
+  const [nombre, setNombre] = useState('');
+  const [email, setEmail] = useState('');
+  const [telefono, setTelefono] = useState('');
+  const [ssnLast4, setSsnLast4] = useState('');
   const [tipoDeclaracion, setTipoDeclaracion] = useState<'Soltero' | 'Casado conjunto' | 'Cabeza de familia'>('Soltero');
-  const [ingresos, setIngresos] = useState<number>(68500);
-  const [direccion, setDireccion] = useState('645 W 187th St, Apt 4B, New York, NY 10033');
+  const [ingresos, setIngresos] = useState<number | ''>('');
+  const [direccion, setDireccion] = useState('');
 
   // Evidence files state
   const [selectedFiles, setSelectedFiles] = useState<Array<{ name: string; size: string; type: string; category: any }>>([
@@ -205,18 +205,47 @@ export const TaxIntakeView: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
               <div>
                 <label className="block font-semibold text-slate-700 mb-1.5">
-                  Estado / Jurisdicción Fiscal *
+                  Estado / Jurisdicción Fiscal (50 Estados USA + PR) *
                 </label>
                 <select
                   value={estado}
                   onChange={e => setEstado(e.target.value as USState)}
                   className="w-full p-3 rounded-xl border border-slate-300 bg-slate-50 font-semibold text-sm text-slate-800 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                 >
-                  <option value="NY">🗽 New York (NY) - 5 Firmas Disponibles</option>
-                  <option value="FL">☀️ Florida (FL) - 3 Firmas Disponibles</option>
-                  <option value="NJ">🌊 New Jersey (NJ) - 2 Firmas Disponibles</option>
-                  <option value="TX">🤠 Texas (TX) - 2 Firmas Disponibles</option>
-                  <option value="RD">🌴 Rep. Dominicana (RD) - 2 Firmas Disponibles</option>
+                  <option value="NY">🗽 New York (NY)</option>
+                  <option value="FL">☀️ Florida (FL)</option>
+                  <option value="TX">🤠 Texas (TX)</option>
+                  <option value="CA">🌴 California (CA)</option>
+                  <option value="NJ">🌊 New Jersey (NJ)</option>
+                  <option value="IL">🏙️ Illinois (IL)</option>
+                  <option value="PA">🔔 Pennsylvania (PA)</option>
+                  <option value="OH">🌾 Ohio (OH)</option>
+                  <option value="GA">🍑 Georgia (GA)</option>
+                  <option value="NC">🌲 North Carolina (NC)</option>
+                  <option value="MI">🚗 Michigan (MI)</option>
+                  <option value="VA">🏛️ Virginia (VA)</option>
+                  <option value="WA">☕ Washington (WA)</option>
+                  <option value="AZ">🌵 Arizona (AZ)</option>
+                  <option value="MA">🎓 Massachusetts (MA)</option>
+                  <option value="TN">🎸 Tennessee (TN)</option>
+                  <option value="IN">🏎️ Indiana (IN)</option>
+                  <option value="MO">⛵ Missouri (MO)</option>
+                  <option value="MD">🦀 Maryland (MD)</option>
+                  <option value="WI">🧀 Wisconsin (WI)</option>
+                  <option value="CO">🏔️ Colorado (CO)</option>
+                  <option value="MN">❄️ Minnesota (MN)</option>
+                  <option value="SC">🏝️ South Carolina (SC)</option>
+                  <option value="AL">🚀 Alabama (AL)</option>
+                  <option value="LA">🎷 Louisiana (LA)</option>
+                  <option value="KY">🐎 Kentucky (KY)</option>
+                  <option value="OR">🌲 Oregon (OR)</option>
+                  <option value="OK">⚡ Oklahoma (OK)</option>
+                  <option value="CT">⚓ Connecticut (CT)</option>
+                  <option value="UT">⛷️ Utah (UT)</option>
+                  <option value="NV">🎰 Nevada (NV)</option>
+                  <option value="PR">🇵🇷 Puerto Rico (PR)</option>
+                  <option value="DC">🏛️ District of Columbia (DC)</option>
+                  <option value="RD">🌴 República Dominicana (Expat/Intl)</option>
                 </select>
               </div>
 
@@ -376,13 +405,13 @@ export const TaxIntakeView: React.FC = () => {
                   <span className="text-emerald-400 font-mono">Total a pagar: $150.00 USD</span>
                 </div>
                 <div className="text-xs text-slate-400 font-mono">
-                  Depósito seguro a Banco BHD - Cuenta: 08694150021
+                  Procesamiento Seguro de Tarifa Tributaria • Facturación e-File IRS Autorizada
                 </div>
               </div>
 
               <div className="flex items-center gap-2 text-slate-400 text-xs">
                 <Lock className="w-4 h-4 text-emerald-400" />
-                <span>Encriptación 256-bit TLS</span>
+                <span>Encriptación 256-bit TLS Bancaria</span>
               </div>
             </div>
 
@@ -394,12 +423,12 @@ export const TaxIntakeView: React.FC = () => {
               {isSubmitting ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  <span>Procesando pago de $150 & Asignando CPA...</span>
+                  <span>Procesando pago de $150 & Asignando CPA en {estado}...</span>
                 </>
               ) : (
                 <>
                   <CreditCard className="w-5 h-5" />
-                  <span>Pagar $150 - Genera Contrato + Asigna CPA Aleatorio {estado}</span>
+                  <span>Pagar $150 - Generar Contrato + Asignar CPA Oficial ({estado})</span>
                 </>
               )}
             </button>
