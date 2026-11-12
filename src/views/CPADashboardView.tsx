@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { SignaturePad } from '../components/SignaturePad';
+import { MembresiaAfiliacionCard } from '../components/MembresiaAfiliacionCard';
 import {
   FileText,
   CheckCircle2,
@@ -21,7 +22,8 @@ import {
   PieChart as PieChartIcon,
   BarChart3,
   TrendingUp,
-  Inbox
+  Inbox,
+  Lock
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import {
@@ -41,6 +43,7 @@ import {
 export const CPADashboardView: React.FC = () => {
   const {
     currentUser,
+    users,
     cases,
     actualizarCaso,
     borrarCasoConLog,
@@ -51,17 +54,31 @@ export const CPADashboardView: React.FC = () => {
     resetToDefaults
   } = useApp();
 
-  // Active CPA user details
-  const cpaUser = currentUser?.rol === 'CONTADOR' ? currentUser : {
-    codigoCPA: 'CPA-NY-12345',
-    nombre: 'Lic. Pedro Baldera, CPA',
-    estado: 'NY',
-    licencia: 'NY-CPA-12345',
-    ptin: 'P00891234',
-    bancoNombre: 'Chase Bank',
-    bancoNumero: '****1234',
-    bancoRouting: '021000021',
-  };
+  // Active CPA user details (resolved from live users state so affiliation updates immediately)
+  const cpaUser =
+    (currentUser && (currentUser.rol === 'CONTADOR' || currentUser.rol === 'FIRMA')
+      ? users.find(u => u.id === currentUser.id) || currentUser
+      : users.find(u => u.rol === 'CONTADOR')) || {
+      id: 'user-cpa-ny-01',
+      rol: 'CONTADOR' as const,
+      email: 'licpedrobaldera@gmail.com',
+      telefono: '+1-917-555-0199',
+      identificacion: 'CPA-NY-12345',
+      claveHash: '12345678',
+      codigoCPA: 'CPA-NY-12345',
+      nombre: 'Lic. Pedro Baldera, CPA',
+      estado: 'NY',
+      licencia: 'NY-CPA-12345',
+      ptin: 'P00891234',
+      bancoNombre: 'Chase Bank',
+      bancoNumero: '****1234',
+      bancoRouting: '021000021',
+      bancoTitular: 'Pedro Baldera Accounting LLC',
+      activo: true,
+      createdAt: new Date().toISOString(),
+      estadoAfiliacion: 'PAGADO' as const,
+      cuentaPorCobrarSaldo: 0
+    };
 
   // Real filtered cases for this CPA
   const cpaCases = cases.filter(
@@ -132,14 +149,25 @@ export const CPADashboardView: React.FC = () => {
 
   const hoveredItem = chartData.find(item => item.statusKey === hoveredStatusKey) || null;
 
+  const [signError, setSignError] = useState<string | null>(null);
+
   const handleQuickSignApprove = () => {
+    setSignError(null);
     if (!featuredCase) return;
+    if (cpaUser.estadoAfiliacion === 'PENDIENTE') {
+      setSignError('Membresía Sociedad de Contadores ($50.00 USD) pendiente. Pague la afiliación o autorice la retención en primeros ingresos en la tarjeta superior antes de firmar.');
+      return;
+    }
     if (!signatureDataUrl && !featuredCase.cpaFirma) {
-      alert('Por favor dibuje su firma oficial en el canvas antes de aprobar.');
+      setSignError('Por favor dibuje su firma oficial en el canvas antes de aprobar.');
       return;
     }
     const sig = signatureDataUrl || featuredCase.cpaFirma?.dataUrl || '';
-    firmarAprobarCPA(featuredCase.id, sig);
+    const res = firmarAprobarCPA(featuredCase.id, sig);
+    if (!res.success) {
+      setSignError(res.error || 'No se pudo aprobar el caso.');
+      return;
+    }
 
     try {
       confetti({
@@ -219,6 +247,9 @@ export const CPADashboardView: React.FC = () => {
           </span>
         </div>
       </div>
+
+      {/* Membresía Sociedad de Contadores ($50.00 USD) - Pago o Retención Contractual */}
+      <MembresiaAfiliacionCard cpaUser={cpaUser} />
 
       {/* KPI Stats based on real registered data */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -684,8 +715,31 @@ export const CPADashboardView: React.FC = () => {
                   className="h-12 border border-slate-200 rounded p-1 bg-white"
                 />
               </div>
+            ) : cpaUser.estadoAfiliacion === 'PENDIENTE' ? (
+              <div className="bg-rose-50 border border-rose-300 rounded-xl p-4 text-xs text-rose-900 flex items-start gap-3">
+                <Lock className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="block text-sm">Firma bloqueada por Membresía de Afiliación ($50.00 USD)</strong>
+                  <p className="mt-1">
+                    Para firmar y certificar casos debe pagar la cuota única de $50.00 USD (Pago Virtual o Transferencia) o autorizar la retención automática sobre sus primeros ingresos en el módulo superior.
+                  </p>
+                </div>
+              </div>
             ) : (
               <div className="space-y-4">
+                {signError && (
+                  <div className="p-3 rounded-xl bg-rose-50 border border-rose-300 text-rose-800 text-xs font-semibold flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    <span>{signError}</span>
+                  </div>
+                )}
+
+                {cpaUser.estadoAfiliacion === 'AUTORIZADO_RETENCION' && (cpaUser.cuentaPorCobrarSaldo ?? 0) > 0 && (
+                  <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs">
+                    <strong>Cláusula de Retención Activa:</strong> Al aprobar este caso ($45.00 USD comisión), se reconocerá el abono automático hacia su Cuenta por Cobrar de Afiliación (Saldo actual: <strong>${(cpaUser.cuentaPorCobrarSaldo ?? 50).toFixed(2)} USD</strong>).
+                  </div>
+                )}
+
                 <SignaturePad
                   onSave={setSignatureDataUrl}
                   title="Canvas de Firma Digital del CPA"

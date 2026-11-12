@@ -61,6 +61,44 @@ export const US_STATES = [
 
 export type USState = typeof US_STATES[number]['code'] | string;
 
+export type ModalidadAfiliacion =
+  | 'PAGO_VIRTUAL'
+  | 'TRANSFERENCIA_BANCO_SISTEMA'
+  | 'RETENCION_PRIMEROS_INGRESOS';
+
+export type EstadoAfiliacion =
+  | 'PENDIENTE'
+  | 'PAGADO'
+  | 'FALLIDO'
+  | 'AUTORIZADO_RETENCION';
+
+export interface CuentaBancariaSistema {
+  id: string;
+  bancoNombre: string;
+  titular: string;
+  numeroCuenta: string;
+  routingSwift: string;
+  tipoCuenta: string;
+  instrucciones: string;
+  updatedAt: string;
+}
+
+export interface PagoAfiliacion {
+  id: number;
+  contador_id: string;
+  contador_nombre: string;
+  contador_email: string;
+  monto: number; // default 50.00
+  moneda: 'USD';
+  concepto: string; // 'Cuota de afiliacion sociedad de contadores'
+  modalidad: ModalidadAfiliacion;
+  estado: 'PENDIENTE' | 'PAGADO' | 'FALLIDO';
+  pasarela?: string;
+  referencia_pasarela: string | null;
+  fecha_pago: string | null;
+  created_at: string;
+}
+
 export interface User {
   id: string;
   rol: UserRole;
@@ -79,6 +117,15 @@ export interface User {
   bancoTitular: string | null;
   activo: boolean;
   createdAt: string;
+  // Membresía Sociedad de Contadores ($50.00 USD)
+  estadoAfiliacion?: EstadoAfiliacion;
+  modalidadAfiliacion?: ModalidadAfiliacion;
+  montoAfiliacion?: number; // $50.00 USD
+  cuentaPorCobrarSaldo?: number; // Saldo pendiente por retener de primeros ingresos ($0 - $50)
+  contratoAfiliacionFirmado?: boolean;
+  contratoAfiliacionFecha?: string | null;
+  clausulaFormaPagoTexto?: string;
+  referenciaPagoAfiliacion?: string | null;
 }
 
 export interface SoporteDocumento {
@@ -150,7 +197,9 @@ export interface PagoComision {
   cpaCodigo: string;
   cpaNombre: string;
   cpaEstado: USState;
-  monto: number;
+  monto: number; // Monto neto transferido
+  montoBruto?: number; // Comisiones brutas generadas ($45 * casos)
+  retencionAfiliacion?: number; // Monto descontado para cubrir cuota $50 de afiliación
   casosIncluidos: string[]; // array of case numbers
   metodoPago: string;
   bancoDestino: string;

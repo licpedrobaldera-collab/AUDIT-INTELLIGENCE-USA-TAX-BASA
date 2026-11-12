@@ -1,4 +1,16 @@
-import { User, TaxCase, PagoComision, SoporteDocumento } from '../types';
+import { User, TaxCase, PagoComision, SoporteDocumento, CuentaBancariaSistema } from '../types';
+
+// Cuenta bancaria asignada al sistema para cobros/transferencias de afiliación (configurable por Admin)
+export const INITIAL_SYSTEM_BANK: CuentaBancariaSistema = {
+  id: 'sys-bank-01',
+  bancoNombre: 'Banco BHD (Cuenta Corporativa Audit Intelligence)',
+  titular: 'AUDIT INTELLIGENCE USA LLC',
+  numeroCuenta: '08694150021',
+  routingSwift: 'BHDDOMSX',
+  tipoCuenta: 'Cuenta Corriente USD / Transferencia ACH & Wire',
+  instrucciones: 'Indicar su Código CPA o Email en el concepto de la transferencia por $50.00 USD.',
+  updatedAt: '2026-01-10T09:00:00Z',
+};
 
 // Certified CPAs across initial states (ready for real assignment)
 export const INITIAL_USERS: User[] = [
@@ -20,6 +32,13 @@ export const INITIAL_USERS: User[] = [
     bancoTitular: 'Pedro Baldera Accounting LLC',
     activo: true,
     createdAt: '2024-01-15T09:00:00Z',
+    estadoAfiliacion: 'PAGADO',
+    modalidadAfiliacion: 'PAGO_VIRTUAL',
+    montoAfiliacion: 50,
+    cuentaPorCobrarSaldo: 0,
+    contratoAfiliacionFirmado: true,
+    contratoAfiliacionFecha: '2024-01-15T09:05:00Z',
+    referenciaPagoAfiliacion: 'AFIL-SYS-0001',
   },
   {
     id: 'user-cpa-fl-02',
@@ -39,6 +58,13 @@ export const INITIAL_USERS: User[] = [
     bancoTitular: 'Ana Martinez Services LLC',
     activo: true,
     createdAt: '2024-02-10T10:30:00Z',
+    estadoAfiliacion: 'AUTORIZADO_RETENCION',
+    modalidadAfiliacion: 'RETENCION_PRIMEROS_INGRESOS',
+    montoAfiliacion: 50,
+    cuentaPorCobrarSaldo: 50,
+    contratoAfiliacionFirmado: true,
+    contratoAfiliacionFecha: '2024-02-10T10:35:00Z',
+    referenciaPagoAfiliacion: 'CXC-AFIL-FL-02',
   },
   {
     id: 'user-cpa-tx-03',
@@ -58,6 +84,10 @@ export const INITIAL_USERS: User[] = [
     bancoTitular: 'Carlos Gomez Tax Group',
     activo: true,
     createdAt: '2024-02-20T11:00:00Z',
+    estadoAfiliacion: 'PENDIENTE',
+    montoAfiliacion: 50,
+    cuentaPorCobrarSaldo: 50,
+    contratoAfiliacionFirmado: false,
   },
   {
     id: 'user-cpa-ca-04',
@@ -77,6 +107,13 @@ export const INITIAL_USERS: User[] = [
     bancoTitular: 'Vasquez Tax Advisory Inc',
     activo: true,
     createdAt: '2024-03-01T10:00:00Z',
+    estadoAfiliacion: 'PAGADO',
+    modalidadAfiliacion: 'TRANSFERENCIA_BANCO_SISTEMA',
+    montoAfiliacion: 50,
+    cuentaPorCobrarSaldo: 0,
+    contratoAfiliacionFirmado: true,
+    contratoAfiliacionFecha: '2024-03-01T10:15:00Z',
+    referenciaPagoAfiliacion: 'TRF-CA-55109',
   },
   {
     id: 'user-admin-01',

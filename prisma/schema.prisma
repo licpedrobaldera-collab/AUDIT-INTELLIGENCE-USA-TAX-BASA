@@ -129,3 +129,32 @@ model CasoTax {
   highubSubido Boolean @default(false)
   firmadoEn DateTime?
 }
+
+model PagoAfiliacion {
+  id                  Int       @id @default(autoincrement())
+  contadorId          String    @map("contador_id")
+  monto               Decimal   @default(50.00)
+  moneda              String    @default("USD")
+  concepto            String    @default("Cuota de afiliacion sociedad de contadores")
+  modalidad           String    @default("PAGO_VIRTUAL") // PAGO_VIRTUAL | TRANSFERENCIA_BANCO_SISTEMA | RETENCION_PRIMEROS_INGRESOS
+  estado              String    @default("PENDIENTE") // PENDIENTE | PAGADO | FALLIDO
+  referenciaPasarela  String?   @map("referencia_pasarela")
+  cuentaPorCobrarSaldo Decimal  @default(50.00) @map("cuenta_por_cobrar_saldo")
+  clausulaAceptada    Boolean   @default(false) @map("clausula_contractual_aceptada")
+  fechaPago           DateTime? @map("fecha_pago")
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  @@map("pagos_afiliacion")
+}
+
+model CuentaBancariaSistema {
+  id           String   @id @default(cuid())
+  bancoNombre  String
+  titular      String
+  numeroCuenta String
+  routingSwift String
+  tipoCuenta   String
+  instrucciones String?
+  updatedAt    DateTime @updatedAt
+}
+

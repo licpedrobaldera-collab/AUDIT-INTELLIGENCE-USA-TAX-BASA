@@ -30,13 +30,35 @@ export const AdminMatrizView: React.FC = () => {
     financialStats,
     pagarComisionOnline,
     exportarExcelCSV,
-    setSelectedCaseForModal
+    setSelectedCaseForModal,
+    systemBankAccount,
+    actualizarBancoSistema,
+    pagosAfiliacion,
+    aprobarTransferenciaAfiliacion
   } = useApp();
 
   const [activeReceipt, setActiveReceipt] = useState<PagoComision | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('TODOS');
   const [stateFilter, setStateFilter] = useState<string>('TODOS');
+  const [adminNotice, setAdminNotice] = useState<string | null>(null);
+
+  // Editable System Bank State (Admin can change to any bank at any time)
+  const [bankForm, setBankForm] = useState({
+    bancoNombre: systemBankAccount.bancoNombre,
+    titular: systemBankAccount.titular,
+    numeroCuenta: systemBankAccount.numeroCuenta,
+    routingSwift: systemBankAccount.routingSwift,
+    tipoCuenta: systemBankAccount.tipoCuenta,
+    instrucciones: systemBankAccount.instrucciones
+  });
+
+  const handleSaveSystemBank = (e: React.FormEvent) => {
+    e.preventDefault();
+    actualizarBancoSistema(bankForm);
+    setAdminNotice(`Cuenta bancaria del sistema actualizada a ${bankForm.bancoNombre} (${bankForm.numeroCuenta}).`);
+    setTimeout(() => setAdminNotice(null), 4000);
+  };
 
   // CPAs and Firms
   const cpaList = users.filter(u => u.rol === 'CONTADOR' || u.rol === 'FIRMA');
@@ -51,7 +73,8 @@ export const AdminMatrizView: React.FC = () => {
   const handlePagarOnline = (cpaId: string, cpaNombre: string) => {
     const pago = pagarComisionOnline(cpaId);
     if (!pago) {
-      alert(`No hay casos aprobados pendientes de cobro para ${cpaNombre}.`);
+      setAdminNotice(`No hay casos aprobados pendientes de cobro para ${cpaNombre}.`);
+      setTimeout(() => setAdminNotice(null), 3500);
       return;
     }
 
@@ -87,6 +110,15 @@ export const AdminMatrizView: React.FC = () => {
       <PayoutReceiptModal pago={activeReceipt} onClose={() => setActiveReceipt(null)} />
 
       {/* Main Header */}
+      {adminNotice && (
+        <div className="bg-emerald-900 text-white px-5 py-3 rounded-2xl text-xs font-semibold flex items-center justify-between shadow-md">
+          <span>{adminNotice}</span>
+          <button onClick={() => setAdminNotice(null)} className="text-emerald-300 hover:text-white font-bold">
+            Cerrar
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold font-mono mb-2">
@@ -94,7 +126,7 @@ export const AdminMatrizView: React.FC = () => {
             <span>Consola Ejecutiva Financiera</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            MATRIZ MAESTRA ADMIN - BHD 08694150021
+            MATRIZ MAESTRA ADMIN - {systemBankAccount.bancoNombre}
           </h1>
           <p className="text-xs sm:text-sm text-slate-500">
             Control de cobros de $150, comisiones CPA de $45, balances por estado y desembolsos
@@ -414,7 +446,14 @@ export const AdminMatrizView: React.FC = () => {
                     <div className="text-[10px] text-blue-600 font-mono">{pago.cpaCodigo}</div>
                   </td>
                   <td className="p-4 font-bold">{pago.cpaEstado}</td>
-                  <td className="p-4 font-black text-emerald-700">${pago.monto.toLocaleString()} USD</td>
+                  <td className="p-4">
+                    <div className="font-black text-emerald-700">${pago.monto.toLocaleString()} USD</div>
+                    {pago.retencionAfiliacion && pago.retencionAfiliacion > 0 ? (
+                      <div className="text-[10px] font-mono text-amber-700">
+                        Bruto: ${pago.montoBruto} | Ret. CxC: -${pago.retencionAfiliacion}
+                      </div>
+                    ) : null}
+                  </td>
                   <td className="p-4 font-mono text-slate-600">
                     {pago.casosIncluidos.length} casos
                   </td>
@@ -432,6 +471,187 @@ export const AdminMatrizView: React.FC = () => {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* SECTION 4: MEMBRESÍA SOCIEDAD DE CONTADORES (pagos_afiliacion $50 USD) */}
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden space-y-4">
+        <div className="p-6 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h3 className="font-extrabold text-base text-slate-900 tracking-tight">
+              MEMBRESÍA SOCIEDAD DE CONTADORES ($50.00 USD) — TABLA pagos_afiliacion
+            </h3>
+            <p className="text-xs text-slate-500">
+              Control de cuota única de afiliación: Pagos Virtuales, Transferencias Bancarias y Cuentas por Cobrar por Retención en Primeros Ingresos
+            </p>
+          </div>
+          <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-800 border border-blue-200 text-xs font-bold font-mono">
+            {pagosAfiliacion.length} registros de afiliación
+          </span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-200 font-semibold text-slate-500 uppercase tracking-wider text-[11px]">
+                <th className="p-4">ID</th>
+                <th className="p-4">Contador</th>
+                <th className="p-4">Modalidad Contractual</th>
+                <th className="p-4">Monto</th>
+                <th className="p-4">Referencia</th>
+                <th className="p-4">Estado</th>
+                <th className="p-4 text-right">Gestión Admin</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {pagosAfiliacion.map(af => {
+                const cpaMatch = users.find(u => u.codigoCPA === af.contador_id || u.id === af.contador_id);
+                const saldoCxC = cpaMatch?.cuentaPorCobrarSaldo ?? (af.estado === 'PAGADO' ? 0 : 50);
+
+                return (
+                  <tr key={af.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="p-4 font-mono text-slate-500">#{af.id}</td>
+                    <td className="p-4">
+                      <div className="font-bold text-slate-900">{af.contador_nombre}</div>
+                      <div className="text-[11px] text-blue-600 font-mono">{af.contador_id}</div>
+                    </td>
+                    <td className="p-4">
+                      <span className="font-semibold text-slate-800 block">{af.modalidad}</span>
+                      <span className="text-[11px] text-slate-500">{af.pasarela || af.concepto}</span>
+                    </td>
+                    <td className="p-4 font-black text-slate-900">
+                      ${af.monto.toFixed(2)} {af.moneda}
+                      {af.modalidad === 'RETENCION_PRIMEROS_INGRESOS' && saldoCxC > 0 && (
+                        <span className="block text-[10px] font-mono text-amber-700">
+                          CxC Pendiente: ${saldoCxC.toFixed(2)}
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-4 font-mono text-slate-600">{af.referencia_pasarela || 'N/A'}</td>
+                    <td className="p-4">
+                      <span
+                        className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                          af.estado === 'PAGADO'
+                            ? 'bg-emerald-100 text-emerald-800'
+                            : af.estado === 'FALLIDO'
+                            ? 'bg-rose-100 text-rose-800'
+                            : 'bg-amber-100 text-amber-800'
+                        }`}
+                      >
+                        {af.estado}
+                      </span>
+                    </td>
+                    <td className="p-4 text-right">
+                      {af.estado === 'PENDIENTE' && af.modalidad !== 'RETENCION_PRIMEROS_INGRESOS' ? (
+                        <button
+                          onClick={() => aprobarTransferenciaAfiliacion(af.id)}
+                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-2xs transition-colors"
+                        >
+                          Confirmar Pago
+                        </button>
+                      ) : af.estado === 'PENDIENTE' ? (
+                        <span className="text-[11px] text-amber-700 font-mono font-semibold">
+                          Retención Automática Activa
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-emerald-700 font-semibold">
+                          Confirmado
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* SECTION 5: CONFIGURACIÓN DE CUENTA BANCARIA PROPIA DEL SISTEMA (CAMBIABLE POR ADMIN) */}
+      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 sm:p-8 space-y-5">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
+          <div>
+            <h3 className="font-black text-base text-slate-900 flex items-center gap-2">
+              <Building className="w-5 h-5 text-indigo-600" />
+              Cuenta Bancaria Asignada al Sistema (Cambiable por el Administrador)
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Esta cuenta se muestra únicamente al realizar un pago o transferencia de afiliación. Puede cambiarse a cualquier otro banco en todo momento.
+            </p>
+          </div>
+          <span className="text-[11px] font-mono text-slate-500">
+            Última actualización: {new Date(systemBankAccount.updatedAt).toLocaleString()}
+          </span>
+        </div>
+
+        <form onSubmit={handleSaveSystemBank} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+          <div>
+            <label className="font-bold text-slate-700 block mb-1">Banco Receptor del Sistema *</label>
+            <input
+              type="text"
+              value={bankForm.bancoNombre}
+              onChange={e => setBankForm({ ...bankForm, bancoNombre: e.target.value })}
+              className="w-full p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500"
+              required
+            />
+          </div>
+          <div>
+            <label className="font-bold text-slate-700 block mb-1">Titular / Razón Social *</label>
+            <input
+              type="text"
+              value={bankForm.titular}
+              onChange={e => setBankForm({ ...bankForm, titular: e.target.value })}
+              className="w-full p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500"
+              required
+            />
+          </div>
+          <div>
+            <label className="font-bold text-slate-700 block mb-1">Número de Cuenta *</label>
+            <input
+              type="text"
+              value={bankForm.numeroCuenta}
+              onChange={e => setBankForm({ ...bankForm, numeroCuenta: e.target.value })}
+              className="w-full p-2.5 rounded-xl border border-slate-300 font-mono focus:ring-2 focus:ring-indigo-500"
+              required
+            />
+          </div>
+          <div>
+            <label className="font-bold text-slate-700 block mb-1">Routing / SWIFT *</label>
+            <input
+              type="text"
+              value={bankForm.routingSwift}
+              onChange={e => setBankForm({ ...bankForm, routingSwift: e.target.value })}
+              className="w-full p-2.5 rounded-xl border border-slate-300 font-mono focus:ring-2 focus:ring-indigo-500"
+              required
+            />
+          </div>
+          <div>
+            <label className="font-bold text-slate-700 block mb-1">Tipo de Cuenta</label>
+            <input
+              type="text"
+              value={bankForm.tipoCuenta}
+              onChange={e => setBankForm({ ...bankForm, tipoCuenta: e.target.value })}
+              className="w-full p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+          <div>
+            <label className="font-bold text-slate-700 block mb-1">Instrucciones de Transferencia</label>
+            <input
+              type="text"
+              value={bankForm.instrucciones}
+              onChange={e => setBankForm({ ...bankForm, instrucciones: e.target.value })}
+              className="w-full p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+
+          <div className="sm:col-span-2 lg:col-span-3 flex justify-end pt-2">
+            <button
+              type="submit"
+              className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-colors"
+            >
+              Guardar / Cambiar Banco del Sistema
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

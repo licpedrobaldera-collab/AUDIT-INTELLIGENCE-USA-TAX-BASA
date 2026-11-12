@@ -1,6 +1,22 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, TaxCase, PagoComision, UserRole, USState, SoporteDocumento } from '../types';
-import { INITIAL_USERS, INITIAL_CASES, INITIAL_PAYOUTS, SAMPLE_DOCS_TEMPLATES } from '../data/mockData';
+import {
+  User,
+  TaxCase,
+  PagoComision,
+  UserRole,
+  USState,
+  SoporteDocumento,
+  CuentaBancariaSistema,
+  PagoAfiliacion,
+  ModalidadAfiliacion
+} from '../types';
+import {
+  INITIAL_USERS,
+  INITIAL_CASES,
+  INITIAL_PAYOUTS,
+  INITIAL_SYSTEM_BANK,
+  SAMPLE_DOCS_TEMPLATES
+} from '../data/mockData';
 
 interface AppContextType {
   currentUser: User | null;
@@ -32,10 +48,22 @@ interface AppContextType {
   }) => TaxCase;
   actualizarCaso: (casoId: string, updates: Partial<TaxCase>, logDetalle?: string) => void;
   borrarCasoConLog: (casoId: string, motivo: string) => void;
-  firmarAprobarCPA: (casoId: string, firmaDataUrl: string) => void;
+  firmarAprobarCPA: (casoId: string, firmaDataUrl: string) => { success: boolean; error?: string };
   pagarComisionOnline: (cpaId: string) => PagoComision | null;
   exportarExcelCSV: (tipo: 'clientes' | 'firmas' | 'payouts' | 'matriz_completa') => void;
   resetToDefaults: () => void;
+  // Membresía Sociedad de Contadores ($50 USD) & Cuenta Bancaria del Sistema
+  systemBankAccount: CuentaBancariaSistema;
+  actualizarBancoSistema: (updates: Partial<CuentaBancariaSistema>) => void;
+  pagosAfiliacion: PagoAfiliacion[];
+  procesarAfiliacionContador: (params: {
+    contadorId: string;
+    modalidad: ModalidadAfiliacion;
+    pasarela?: string;
+    referenciaManual?: string;
+    aceptarClausula: boolean;
+  }) => Promise<{ success: boolean; url?: string; referencia?: string; error?: string }>;
+  aprobarTransferenciaAfiliacion: (pagoId: number) => Promise<void>;
   // Stats
   financialStats: {
     totalCobrado: number;
@@ -85,6 +113,56 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   });
 
+  const [systemBankAccount, setSystemBankAccount] = useState<CuentaBancariaSistema>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}system_bank`);
+      return saved ? JSON.parse(saved) : INITIAL_SYSTEM_BANK;
+    } catch {
+      return INITIAL_SYSTEM_BANK;
+    }
+  });
+
+  const [pagosAfiliacion, setPagosAfiliacion] = useState<PagoAfiliacion[]>(() => {
+    try {
+      const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}pagos_afiliacion`);
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // ignore
+    }
+    return [
+      {
+        id: 1,
+        contador_id: 'CPA-NY-12345',
+        contador_nombre: 'Lic. Pedro Baldera, CPA',
+        contador_email: 'licpedrobaldera@gmail.com',
+        monto: 50,
+        moneda: 'USD',
+        concepto: 'Cuota de afiliacion sociedad de contadores',
+        modalidad: 'PAGO_VIRTUAL',
+        estado: 'PAGADO',
+        pasarela: 'Stripe Checkout',
+        referencia_pasarela: 'AFIL-SYS-0001',
+        fecha_pago: '2024-01-15T09:05:00Z',
+        created_at: '2024-01-15T09:00:00Z',
+      },
+      {
+        id: 2,
+        contador_id: 'CPA-FL-88901',
+        contador_nombre: 'Ana Martinez, CPA',
+        contador_email: 'ana@fl.com',
+        monto: 50,
+        moneda: 'USD',
+        concepto: 'Cuota de afiliacion sociedad de contadores',
+        modalidad: 'RETENCION_PRIMEROS_INGRESOS',
+        estado: 'PENDIENTE',
+        pasarela: 'Cuenta por Cobrar - Retención Primeros Ingresos',
+        referencia_pasarela: 'CXC-AFIL-FL-02',
+        fecha_pago: null,
+        created_at: '2024-02-10T10:35:00Z',
+      },
+    ];
+  });
+
   // Current logged in user (defaults to Pedro Baldera CPA for immediate richness, or can switch)
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     try {
@@ -131,6 +209,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       console.warn('Storage error payouts', e);
     }
   }, [payouts]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(`${STORAGE_KEY_PREFIX}system_bank`, JSON.stringify(systemBankAccount));
+    } catch (e) {
+      console.warn('Storage error system_bank', e);
+    }
+  }, [systemBankAccount]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(`${STORAGE_KEY_PREFIX}pagos_afiliacion`, JSON.stringify(pagosAfiliacion));
+    } catch (e) {
+      console.warn('Storage error pagos_afiliacion', e);
+    }
+  }, [pagosAfiliacion]);
 
   useEffect(() => {
     try {
@@ -223,6 +317,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       cpaCode = userData.codigoCPA || `CPA-${state}-${Math.floor(10000 + Math.random() * 90000)}`;
     }
 
+    const isCpaOrFirm = userData.rol === 'CONTADOR' || userData.rol === 'FIRMA';
+    const modalidadInicial = userData.modalidadAfiliacion;
+    const estadoAfiliacionInicial = isCpaOrFirm
+      ? userData.estadoAfiliacion || (modalidadInicial === 'RETENCION_PRIMEROS_INGRESOS' ? 'AUTORIZADO_RETENCION' : 'PENDIENTE')
+      : undefined;
+
     const newUser: User = {
       id: `user-${Date.now()}`,
       rol: userData.rol || 'CLIENTE',
@@ -241,6 +341,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       bancoTitular: userData.bancoTitular || userData.nombre || null,
       activo: true,
       createdAt: new Date().toISOString(),
+      ...(isCpaOrFirm
+        ? {
+            estadoAfiliacion: estadoAfiliacionInicial,
+            modalidadAfiliacion: modalidadInicial,
+            montoAfiliacion: 50,
+            cuentaPorCobrarSaldo: estadoAfiliacionInicial === 'PAGADO' ? 0 : 50,
+            contratoAfiliacionFirmado: !!userData.contratoAfiliacionFirmado,
+            contratoAfiliacionFecha: userData.contratoAfiliacionFirmado ? new Date().toISOString() : null,
+            clausulaFormaPagoTexto: userData.clausulaFormaPagoTexto,
+          }
+        : {}),
     };
 
     setUsers(prev => [newUser, ...prev]);
@@ -408,10 +519,194 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     );
   };
 
+  const actualizarBancoSistema = (updates: Partial<CuentaBancariaSistema>) => {
+    setSystemBankAccount(prev => ({
+      ...prev,
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    }));
+  };
+
+  const generarClausulaContractual = (modalidad: ModalidadAfiliacion, bank: CuentaBancariaSistema) => {
+    if (modalidad === 'PAGO_VIRTUAL') {
+      return `CLÁUSULA CUARTA (MEMBRESÍA SOCIEDAD DE CONTADORES - $50.00 USD): El Contador acepta el pago único de $50.00 USD vía Pasarela de Pago Virtual autorizada, habilitando de inmediato su facultad de firma y certificación tributaria dentro de la plataforma.`;
+    }
+    if (modalidad === 'TRANSFERENCIA_BANCO_SISTEMA') {
+      return `CLÁUSULA CUARTA (MEMBRESÍA SOCIEDAD DE CONTADORES - $50.00 USD): El Contador efectúa el pago único de $50.00 USD mediante transferencia bancaria a la cuenta asignada al sistema (${bank.bancoNombre} • Cuenta ${bank.numeroCuenta} • Titular ${bank.titular}), la cual podrá ser actualizada o sustituida a otro banco cuando el Administrador lo disponga.`;
+    }
+    return `CLÁUSULA CUARTA (MEMBRESÍA SOCIEDAD DE CONTADORES - $50.00 USD POR RETENCIÓN): El Contador autoriza expresamente que la cuota única de afiliación de $50.00 USD sea registrada como Cuenta por Cobrar a Derecho de Afiliación y retenida automáticamente de sus primeros ingresos devengados por comisiones, reconociéndose desde su primer caso generador de ingresos hasta saldar los $50.00 USD.`;
+  };
+
+  const procesarAfiliacionContador = async ({
+    contadorId,
+    modalidad,
+    pasarela,
+    referenciaManual,
+    aceptarClausula,
+  }: {
+    contadorId: string;
+    modalidad: ModalidadAfiliacion;
+    pasarela?: string;
+    referenciaManual?: string;
+    aceptarClausula: boolean;
+  }) => {
+    if (!aceptarClausula) {
+      return { success: false, error: 'Debe aceptar la cláusula contractual de membresía ($50.00 USD).' };
+    }
+
+    const targetUser = users.find(u => u.id === contadorId || u.codigoCPA === contadorId);
+    if (!targetUser) {
+      return { success: false, error: 'Contador no encontrado en el registro.' };
+    }
+
+    const clausulaTexto = generarClausulaContractual(modalidad, systemBankAccount);
+    const pasarelaNombre =
+      modalidad === 'PAGO_VIRTUAL'
+        ? pasarela || 'Stripe / PayPal / Azul / CardNet'
+        : modalidad === 'TRANSFERENCIA_BANCO_SISTEMA'
+        ? `Transferencia -> ${systemBankAccount.bancoNombre}`
+        : 'Cuenta por Cobrar - Retención Primeros Ingresos';
+
+    let apiData: any = null;
+    try {
+      const response = await fetch('/api/crear-cobro-afiliacion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contadorId: targetUser.codigoCPA || targetUser.id,
+          emailContador: targetUser.email || '',
+          nombreCompleto: targetUser.nombre,
+          modalidad,
+          pasarela: pasarelaNombre,
+          referenciaManual,
+        }),
+      });
+      if (response.ok) {
+        apiData = await response.json();
+      }
+    } catch {
+      // Fallback local si el API no responde
+    }
+
+    // Si Stripe devolvió URL externa real, redirigimos a la pasarela
+    if (apiData?.url && String(apiData.url).startsWith('http')) {
+      return { success: true, url: apiData.url, referencia: apiData.referenciaPasarela };
+    }
+
+    const refFinal =
+      apiData?.referenciaPasarela ||
+      referenciaManual ||
+      `AFIL-${modalidad.slice(0, 4)}-${Date.now().toString().slice(-6)}`;
+
+    const nowIso = new Date().toISOString();
+    const isPaidNow = modalidad === 'PAGO_VIRTUAL';
+    const isRetention = modalidad === 'RETENCION_PRIMEROS_INGRESOS';
+
+    const nuevoEstadoAfiliacion = isPaidNow
+      ? 'PAGADO'
+      : isRetention
+      ? 'AUTORIZADO_RETENCION'
+      : 'PENDIENTE';
+
+    const nuevoRegistroPago: PagoAfiliacion = {
+      id: apiData?.registro?.id || Date.now(),
+      contador_id: targetUser.codigoCPA || targetUser.id,
+      contador_nombre: targetUser.nombre,
+      contador_email: targetUser.email || '',
+      monto: 50.0,
+      moneda: 'USD',
+      concepto: 'Cuota de afiliacion sociedad de contadores',
+      modalidad,
+      estado: isPaidNow ? 'PAGADO' : 'PENDIENTE',
+      pasarela: pasarelaNombre,
+      referencia_pasarela: refFinal,
+      fecha_pago: isPaidNow ? nowIso : null,
+      created_at: nowIso,
+    };
+
+    setPagosAfiliacion(prev => [nuevoRegistroPago, ...prev]);
+
+    const patchUser = (u: User): User =>
+      u.id === targetUser.id
+        ? {
+            ...u,
+            estadoAfiliacion: nuevoEstadoAfiliacion,
+            modalidadAfiliacion: modalidad,
+            montoAfiliacion: 50,
+            cuentaPorCobrarSaldo: isPaidNow ? 0 : 50,
+            contratoAfiliacionFirmado: true,
+            contratoAfiliacionFecha: nowIso,
+            clausulaFormaPagoTexto: clausulaTexto,
+            referenciaPagoAfiliacion: refFinal,
+          }
+        : u;
+
+    setUsers(prev => prev.map(patchUser));
+    if (currentUser?.id === targetUser.id) {
+      setCurrentUser(prev => (prev ? patchUser(prev) : prev));
+    }
+
+    return { success: true, referencia: refFinal };
+  };
+
+  const aprobarTransferenciaAfiliacion = async (pagoId: number) => {
+    const pago = pagosAfiliacion.find(p => p.id === pagoId);
+    if (!pago) return;
+
+    try {
+      await fetch('/api/confirmar-pago-afiliacion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          referenciaPasarela: pago.referencia_pasarela,
+          contadorId: pago.contador_id,
+        }),
+      });
+    } catch {
+      // ignore offline
+    }
+
+    const nowIso = new Date().toISOString();
+    setPagosAfiliacion(prev =>
+      prev.map(p => (p.id === pagoId ? { ...p, estado: 'PAGADO', fecha_pago: nowIso } : p))
+    );
+
+    const patchUser = (u: User): User =>
+      u.codigoCPA === pago.contador_id || u.id === pago.contador_id
+        ? {
+            ...u,
+            estadoAfiliacion: 'PAGADO',
+            cuentaPorCobrarSaldo: 0,
+            referenciaPagoAfiliacion: pago.referencia_pasarela,
+          }
+        : u;
+
+    setUsers(prev => prev.map(patchUser));
+    if (currentUser && (currentUser.codigoCPA === pago.contador_id || currentUser.id === pago.contador_id)) {
+      setCurrentUser(prev => (prev ? patchUser(prev) : prev));
+    }
+  };
+
   const firmarAprobarCPA = (casoId: string, firmaDataUrl: string) => {
+    // Validar requisito de afiliación ($50 USD pagados o retención contractual autorizada)
+    const activeCpa = currentUser?.rol === 'CONTADOR' || currentUser?.rol === 'FIRMA' ? currentUser : null;
+    if (activeCpa && activeCpa.estadoAfiliacion === 'PENDIENTE') {
+      return {
+        success: false,
+        error: 'Afiliación de $50 USD pendiente. Debe pagar la membresía o autorizar la retención de primeros ingresos antes de firmar.',
+      };
+    }
+
+    const isRetentionCpa =
+      activeCpa?.estadoAfiliacion === 'AUTORIZADO_RETENCION' && (activeCpa?.cuentaPorCobrarSaldo ?? 0) > 0;
+
     setCases(prev =>
       prev.map(c => {
         if (c.id !== casoId) return c;
+
+        const retencionNota = isRetentionCpa
+          ? ` (Nota CxC Afiliación: se aplicará retención automática de los primeros ingresos hasta completar $50.00 USD; saldo actual $${activeCpa?.cuentaPorCobrarSaldo?.toFixed(2)}).`
+          : '';
 
         const updatedHistory = [
           ...c.historial,
@@ -420,7 +715,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             fecha: new Date().toLocaleString(),
             accion: 'Firma Oficial CPA & Aprobación',
             usuario: currentUser?.nombre || c.cpaNombre || 'CPA Asignado',
-            detalle: 'Firma digital registrada bajo responsabilidad IRS Circular 230 y Confidencialidad IRC 7216. Comisión de $45 lista para cobro.',
+            detalle: `Firma digital registrada bajo responsabilidad IRS Circular 230 y Confidencialidad IRC 7216. Comisión de $45 lista para cobro.${retencionNota}`,
           },
         ];
 
@@ -438,6 +733,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         };
       })
     );
+
+    return { success: true };
   };
 
   const pagarComisionOnline = (cpaId: string) => {
@@ -451,8 +748,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     if (casosAprobadosPendientes.length === 0) return null;
 
-    const montoTotal = casosAprobadosPendientes.reduce((acc, curr) => acc + (curr.comisionMonto || 45), 0);
-    const refBHD = `BHD-08694150021-TR-${Math.floor(10000000 + Math.random() * 90000000)}`;
+    const montoBruto = casosAprobadosPendientes.reduce((acc, curr) => acc + (curr.comisionMonto || 45), 0);
+    const saldoPorCobrarAfiliacion =
+      cpa.estadoAfiliacion === 'AUTORIZADO_RETENCION' || cpa.estadoAfiliacion === 'PENDIENTE'
+        ? cpa.cuentaPorCobrarSaldo ?? 0
+        : 0;
+    const retencionAfiliacion = Math.min(montoBruto, saldoPorCobrarAfiliacion);
+    const montoNeto = Math.max(0, montoBruto - retencionAfiliacion);
+    const nuevoSaldoAfiliacion = Math.max(0, saldoPorCobrarAfiliacion - retencionAfiliacion);
+
+    const refBHD = `${systemBankAccount.bancoNombre.slice(0, 3).toUpperCase()}-${systemBankAccount.numeroCuenta}-TR-${Math.floor(10000000 + Math.random() * 90000000)}`;
 
     const nuevoPago: PagoComision = {
       id: `pago-${Date.now()}`,
@@ -460,15 +765,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       cpaCodigo: cpa.codigoCPA || 'CPA-NY-12345',
       cpaNombre: cpa.nombre,
       cpaEstado: cpa.estado,
-      monto: montoTotal,
+      monto: montoNeto,
+      montoBruto,
+      retencionAfiliacion,
       casosIncluidos: casosAprobadosPendientes.map(c => c.casoNumero),
-      metodoPago: `Transferencia Electrónica BHD Cuenta 08694150021 -> ${cpa.bancoNombre || 'Banco'} (${cpa.bancoNumero || '****1234'})`,
+      metodoPago: `Transferencia ${systemBankAccount.bancoNombre} (${systemBankAccount.numeroCuenta}) -> ${cpa.bancoNombre || 'Banco'} (${cpa.bancoNumero || '****1234'})${retencionAfiliacion > 0 ? ` | Retención Afiliación: -$${retencionAfiliacion.toFixed(2)}` : ''}`,
       bancoDestino: `${cpa.bancoNombre || 'Banco'} ${cpa.bancoNumero || '****1234'} - Routing: ${cpa.bancoRouting || 'N/A'}`,
       comprobanteUrl: `/PAYOUTS/2024/${cpa.codigoCPA || 'CPA'}/COMPROBANTE-${Date.now()}.pdf`,
       referenciaBHD: refBHD,
       fechaPago: new Date().toLocaleString(),
       estado: 'PAGADO',
     };
+
+    // Si hubo retención de afiliación, actualizar saldo CxC del CPA y tabla pagosAfiliacion
+    if (retencionAfiliacion > 0) {
+      const afiliacionSaldada = nuevoSaldoAfiliacion === 0;
+      const patchUser = (u: User): User =>
+        u.id === cpa.id
+          ? {
+              ...u,
+              cuentaPorCobrarSaldo: nuevoSaldoAfiliacion,
+              estadoAfiliacion: afiliacionSaldada ? 'PAGADO' : u.estadoAfiliacion,
+            }
+          : u;
+      setUsers(prev => prev.map(patchUser));
+      if (currentUser?.id === cpa.id) {
+        setCurrentUser(prev => (prev ? patchUser(prev) : prev));
+      }
+      if (afiliacionSaldada) {
+        setPagosAfiliacion(prev =>
+          prev.map(p =>
+            p.contador_id === (cpa.codigoCPA || cpa.id) || p.contador_id === cpa.id
+              ? { ...p, estado: 'PAGADO', fecha_pago: new Date().toISOString() }
+              : p
+          )
+        );
+      }
+    }
 
     // Actualizar casos a PAGADO
     const casosIdsAprobados = new Set(casosAprobadosPendientes.map(c => c.id));
@@ -484,8 +817,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 id: `h-${Date.now()}`,
                 fecha: new Date().toLocaleString(),
                 accion: 'Liquidación de Comisión $45',
-                usuario: 'Admin Matriz BHD',
-                detalle: `Pago de comisión procesado con Referencia BHD: ${refBHD}`,
+                usuario: 'Admin Matriz Financiera',
+                detalle: `Pago procesado (Bruto: $${montoBruto}, Retención Afiliación: -$${retencionAfiliacion}, Neto: $${montoNeto}) Ref: ${refBHD}`,
               },
             ],
           };
@@ -533,9 +866,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.removeItem(`${STORAGE_KEY_PREFIX}cases`);
     localStorage.removeItem(`${STORAGE_KEY_PREFIX}payouts`);
     localStorage.removeItem(`${STORAGE_KEY_PREFIX}current_user`);
+    localStorage.removeItem(`${STORAGE_KEY_PREFIX}system_bank`);
+    localStorage.removeItem(`${STORAGE_KEY_PREFIX}pagos_afiliacion`);
     setUsers(INITIAL_USERS);
     setCases(INITIAL_CASES);
     setPayouts(INITIAL_PAYOUTS);
+    setSystemBankAccount(INITIAL_SYSTEM_BANK);
     setCurrentUser(INITIAL_USERS[0]);
     navigate('/admin/matriz');
   };
@@ -590,6 +926,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         pagarComisionOnline,
         exportarExcelCSV,
         resetToDefaults,
+        systemBankAccount,
+        actualizarBancoSistema,
+        pagosAfiliacion,
+        procesarAfiliacionContador,
+        aprobarTransferenciaAfiliacion,
         financialStats: {
           totalCobrado,
           totalPagado,

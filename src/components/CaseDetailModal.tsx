@@ -44,11 +44,15 @@ export const CaseDetailModal: React.FC<CaseDetailModalProps> = ({ caso, onClose 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
   const [savedNotification, setSavedNotification] = useState(false);
+  const [signError, setSignError] = useState<string | null>(null);
 
   if (!caso) return null;
 
   const isCpa = currentUser?.rol === 'CONTADOR' || currentUser?.rol === 'ADMIN' || currentUser?.rol === 'DEV';
   const isAssignedCpa = currentUser?.codigoCPA === caso.cpaCodigo || currentUser?.id === caso.cpaUserId || currentUser?.rol === 'ADMIN';
+  const isMembershipPending =
+    (currentUser?.rol === 'CONTADOR' || currentUser?.rol === 'FIRMA') &&
+    currentUser?.estadoAfiliacion === 'PENDIENTE';
 
   const handleSaveNotes = () => {
     actualizarCaso(caso.id, { notasCPA: cpaNotes }, `Notas actualizadas por ${currentUser?.nombre || 'CPA'}`);
@@ -57,12 +61,21 @@ export const CaseDetailModal: React.FC<CaseDetailModalProps> = ({ caso, onClose 
   };
 
   const handleFirmarYAprobar = () => {
+    setSignError(null);
+    if (isMembershipPending) {
+      setSignError('Membresía Sociedad de Contadores ($50.00 USD) pendiente. Complete el pago o autorice la retención de primeros ingresos en su CPA Dashboard antes de firmar.');
+      return;
+    }
     if (!firmaCpaDataUrl && !caso.cpaFirma) {
-      alert('Por favor realice su trazo de firma digital en el recuadro antes de aprobar.');
+      setSignError('Por favor realice su trazo de firma digital en el recuadro antes de aprobar.');
       return;
     }
     const signatureToUse = firmaCpaDataUrl || caso.cpaFirma?.dataUrl || '';
-    firmarAprobarCPA(caso.id, signatureToUse);
+    const res = firmarAprobarCPA(caso.id, signatureToUse);
+    if (!res.success) {
+      setSignError(res.error || 'No se pudo completar la firma.');
+      return;
+    }
     try {
       confetti({
         particleCount: 80,
@@ -324,16 +337,24 @@ export const CaseDetailModal: React.FC<CaseDetailModalProps> = ({ caso, onClose 
           {/* TAB: FIRMA CONTRATO CPA */}
           {activeTab === 'firma' && (
             <div className="space-y-5">
-              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-xs text-emerald-950">
-                <div className="flex items-center gap-2 font-bold text-sm text-emerald-900 mb-1">
+              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-xs text-emerald-950 space-y-2">
+                <div className="flex items-center gap-2 font-bold text-sm text-emerald-900">
                   <Shield className="w-4 h-4 text-emerald-700" />
                   CONTRATO FIRMA CPA ONLINE - RESPONSABILIDAD IRS + CONFIDENCIALIDAD
                 </div>
                 <p className="leading-relaxed text-emerald-800">
                   En cumplimiento con la <strong>Circular 230 del Departamento del Tesoro / IRS</strong> y la <strong>Sección 7216 del Código de Rentas Internas (IRC)</strong>, 
-                  el Contador Público Autorizado (CPA) certifica que los soportes adjuntos han sido examinados y que la liquidación se procesa conforme a las directrices tributarias vigentes para el año fiscal 2024.
+                  el Contador Público Autorizado (CPA) certifica que los soportes adjuntos han sido examinados y que la liquidación se procesa conforme a las directrices tributarias vigentes.
                 </p>
-                <div className="mt-2 text-[11px] font-mono text-emerald-700 flex items-center gap-4">
+                <div className="bg-white/80 border border-emerald-200 rounded-lg p-2.5 text-[11px] text-emerald-900">
+                  <strong>CLÁUSULA CUARTA — CUOTA DE AFILIACIÓN ($50.00 USD):</strong> El ejercicio de firma y prestación de servicios requiere haber cubierto la cuota única de membresía de $50.00 USD (vía Pago Virtual, Transferencia a la cuenta asignada al sistema — actualizable por el Administrador — o mediante autorización de Retención en Primeros Ingresos como Cuenta por Cobrar reconocida desde el primer caso generador de ingresos del Contador).
+                  {currentUser?.clausulaFormaPagoTexto && (
+                    <span className="block mt-1 font-mono text-[10px] text-slate-700">
+                      Modalidad suscrita: {currentUser.clausulaFormaPagoTexto}
+                    </span>
+                  )}
+                </div>
+                <div className="text-[11px] font-mono text-emerald-700 flex flex-wrap items-center gap-4">
                   <span>Licencia: {currentUser?.licencia || 'NY-CPA-12345'}</span>
                   <span>PTIN: {currentUser?.ptin || 'P00891234'}</span>
                   <span>Comisión: $45.00 USD</span>
@@ -352,8 +373,25 @@ export const CaseDetailModal: React.FC<CaseDetailModalProps> = ({ caso, onClose 
                     Registrado el {new Date(caso.cpaFirma.fecha).toLocaleString()} por {caso.cpaNombre} ({caso.cpaCodigo})
                   </p>
                 </div>
+              ) : isMembershipPending ? (
+                <div className="bg-rose-50 border border-rose-300 rounded-xl p-4 text-xs text-rose-900 space-y-1">
+                  <div className="font-bold flex items-center gap-1.5 text-rose-800">
+                    <AlertCircle className="w-4 h-4" />
+                    Afiliación de $50.00 USD Pendiente de Activación
+                  </div>
+                  <p>
+                    Diríjase a su <strong>CPA Dashboard</strong> para elegir su modalidad de pago (Pago Virtual, Transferencia a Cuenta del Sistema o Retención Automática sobre Primeros Ingresos) antes de firmar este expediente.
+                  </p>
+                </div>
               ) : (
                 <div className="space-y-4">
+                  {signError && (
+                    <div className="p-3 bg-rose-50 border border-rose-300 rounded-xl text-xs text-rose-800 font-semibold flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                      <span>{signError}</span>
+                    </div>
+                  )}
+
                   <SignaturePad
                     onSave={setFirmaCpaDataUrl}
                     title="Canvas de Firma Digital del CPA"
@@ -457,7 +495,7 @@ export const CaseDetailModal: React.FC<CaseDetailModalProps> = ({ caso, onClose 
         {/* Modal Footer */}
         <div className="bg-slate-50 border-t border-slate-200 px-6 py-3.5 flex items-center justify-between text-xs">
           <div className="text-slate-500 font-mono">
-            {caso.carpetaPath} • BHD 08694150021
+            {caso.carpetaPath} • Audit Intelligence USA Vault
           </div>
           <button
             onClick={onClose}

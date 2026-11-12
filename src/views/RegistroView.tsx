@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { UserRole, USState } from '../types';
+import { UserRole, USState, ModalidadAfiliacion } from '../types';
 import {
   UserPlus,
   ShieldCheck,
@@ -14,7 +14,7 @@ import {
 import confetti from 'canvas-confetti';
 
 export const RegistroView: React.FC = () => {
-  const { registerUser, navigate } = useApp();
+  const { registerUser, systemBankAccount, navigate } = useApp();
 
   const [rol, setRol] = useState<UserRole>('CLIENTE');
   const [estado, setEstado] = useState<USState>('NY');
@@ -30,6 +30,8 @@ export const RegistroView: React.FC = () => {
   const [bancoNombre, setBancoNombre] = useState('Chase Bank');
   const [bancoNumero, setBancoNumero] = useState('****9921');
   const [bancoRouting, setBancoRouting] = useState('021000021');
+  const [modalidadAfiliacion, setModalidadAfiliacion] = useState<ModalidadAfiliacion>('RETENCION_PRIMEROS_INGRESOS');
+  const [aceptarClausulaAfiliacion, setAceptarClausulaAfiliacion] = useState(true);
 
   // Verification code state
   const [showCodeModal, setShowCodeModal] = useState(false);
@@ -57,6 +59,11 @@ export const RegistroView: React.FC = () => {
       return;
     }
 
+    if ((rol === 'CONTADOR' || rol === 'FIRMA') && !aceptarClausulaAfiliacion) {
+      setErrorMsg('Debe aceptar la cláusula de membresía de la Sociedad de Contadores ($50.00 USD) para continuar.');
+      return;
+    }
+
     // Generate random 6-digit code
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     setGeneratedSampleCode(code);
@@ -66,9 +73,18 @@ export const RegistroView: React.FC = () => {
   const handleConfirmSixDigits = (e: React.FormEvent) => {
     e.preventDefault();
     if (sixDigitCode !== generatedSampleCode && sixDigitCode !== '123456') {
-      alert(`Código incorrecto. Use el código generado: ${generatedSampleCode}`);
+      setErrorMsg(`Código incorrecto. Use el código generado: ${generatedSampleCode}`);
       return;
     }
+
+    const isCpaRole = rol === 'CONTADOR' || rol === 'FIRMA';
+    const clausulaTexto = isCpaRole
+      ? modalidadAfiliacion === 'RETENCION_PRIMEROS_INGRESOS'
+        ? 'Autorizo retener la cuota única de afiliación ($50.00 USD) como Cuenta por Cobrar de mis primeros ingresos devengados desde mi primer caso.'
+        : modalidadAfiliacion === 'TRANSFERENCIA_BANCO_SISTEMA'
+        ? `Pago único de afiliación ($50.00 USD) vía transferencia bancaria a la cuenta asignada al sistema (${systemBankAccount.bancoNombre}).`
+        : 'Pago único de afiliación ($50.00 USD) vía Pasarela Virtual antes de brindar el servicio.'
+      : undefined;
 
     const res = registerUser({
       rol,
@@ -78,11 +94,22 @@ export const RegistroView: React.FC = () => {
       telefono: telefono || null,
       identificacion: identificacion || null,
       claveHash: clave,
-      licencia: rol === 'CONTADOR' || rol === 'FIRMA' ? licencia : null,
-      ptin: rol === 'CONTADOR' || rol === 'FIRMA' ? ptin : null,
-      bancoNombre: rol === 'CONTADOR' || rol === 'FIRMA' ? bancoNombre : null,
-      bancoNumero: rol === 'CONTADOR' || rol === 'FIRMA' ? bancoNumero : null,
-      bancoRouting: rol === 'CONTADOR' || rol === 'FIRMA' ? bancoRouting : null,
+      licencia: isCpaRole ? licencia : null,
+      ptin: isCpaRole ? ptin : null,
+      bancoNombre: isCpaRole ? bancoNombre : null,
+      bancoNumero: isCpaRole ? bancoNumero : null,
+      bancoRouting: isCpaRole ? bancoRouting : null,
+      ...(isCpaRole
+        ? {
+            modalidadAfiliacion,
+            estadoAfiliacion:
+              modalidadAfiliacion === 'RETENCION_PRIMEROS_INGRESOS'
+                ? 'AUTORIZADO_RETENCION'
+                : 'PENDIENTE',
+            contratoAfiliacionFirmado: aceptarClausulaAfiliacion,
+            clausulaFormaPagoTexto: clausulaTexto,
+          }
+        : {}),
     });
 
     if (res.success) {
@@ -167,7 +194,7 @@ export const RegistroView: React.FC = () => {
             REGISTRO POR ROL
           </h2>
           <p className="text-xs text-slate-500">
-            Audit Intelligence USA Tax - BHD 08694150021
+            Audit Intelligence USA Tax • Plataforma Multi-Jurisdicción
           </p>
         </div>
 
@@ -399,6 +426,46 @@ export const RegistroView: React.FC = () => {
                     className="w-full p-2.5 rounded-lg border border-emerald-300 bg-white font-mono"
                   />
                 </div>
+              </div>
+
+              {/* Cuota de Membresía Sociedad de Contadores ($50.00 USD) */}
+              <div className="mt-3 pt-3 border-t border-emerald-200 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-emerald-950">
+                    Membresía Sociedad de Contadores (Cuota única $50.00 USD):
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-emerald-600 text-white font-mono text-[10px] font-bold">
+                    Pago Único
+                  </span>
+                </div>
+
+                <select
+                  value={modalidadAfiliacion}
+                  onChange={e => setModalidadAfiliacion(e.target.value as ModalidadAfiliacion)}
+                  className="w-full p-2.5 rounded-lg border border-emerald-300 bg-white font-semibold text-slate-800"
+                >
+                  <option value="RETENCION_PRIMEROS_INGRESOS">
+                    Autorizar Retención en Primeros Ingresos ($50 CxC desde mi primer caso)
+                  </option>
+                  <option value="PAGO_VIRTUAL">
+                    Pago Virtual ($50 USD vía Stripe / PayPal / Azul antes de brindar servicio)
+                  </option>
+                  <option value="TRANSFERENCIA_BANCO_SISTEMA">
+                    Transferencia Bancaria ($50 USD a cuenta asignada del sistema)
+                  </option>
+                </select>
+
+                <label className="flex items-start gap-2 cursor-pointer text-[11px] text-emerald-950 bg-white/80 p-2.5 rounded-lg border border-emerald-200">
+                  <input
+                    type="checkbox"
+                    checked={aceptarClausulaAfiliacion}
+                    onChange={e => setAceptarClausulaAfiliacion(e.target.checked)}
+                    className="mt-0.5 rounded border-emerald-400 text-emerald-600"
+                  />
+                  <span>
+                    Acepto la cláusula contractual de membresía ($50.00 USD). Si elijo retención, autorizo descontar el derecho de afiliación como Cuenta por Cobrar desde mi primer caso generador de ingresos.
+                  </span>
+                </label>
               </div>
             </div>
           )}

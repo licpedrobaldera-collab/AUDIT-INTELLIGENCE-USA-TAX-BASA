@@ -25,6 +25,6 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["src/**/*", "lib/autodynamic-citizen-engine.ts", "vite.config.ts"],
+  "include": ["src/**/*", "lib/autodynamic-citizen-engine.ts", "server.ts", "vite.config.ts"],
   "exclude": ["node_modules", "dist", "app", "lib/prisma.ts", "lib/highub.ts", "backup-pb package"]
 }
