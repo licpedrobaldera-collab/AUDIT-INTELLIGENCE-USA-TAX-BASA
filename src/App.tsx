@@ -15,6 +15,7 @@ import { DirectorioView } from './views/DirectorioView';
 import { LoginView } from './views/LoginView';
 import { RegistroView } from './views/RegistroView';
 import { GoogleDriveManagerView } from './views/GoogleDriveManagerView';
+import { PortalAutodinamicoView } from './views/PortalAutodinamicoView';
 
 import { ShieldCheck, Heart } from 'lucide-react';
 
@@ -36,6 +37,8 @@ const AppContent: React.FC = () => {
         return <HomeView />;
       case '/tax':
         return <TaxIntakeView />;
+      case '/portal-ciudadano':
+        return <PortalAutodinamicoView />;
       case '/cpa/dashboard':
         return <CPADashboardView />;
       case '/drive':

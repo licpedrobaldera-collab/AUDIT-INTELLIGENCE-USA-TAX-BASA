@@ -175,8 +175,165 @@ export const SAMPLE_DOCS_TEMPLATES: SoporteDocumento[] = [
   },
 ];
 
-// Zero phantom cases: clean slate for 100% real cases registered by users and CPAs
-export const INITIAL_CASES: TaxCase[] = [];
+// Real starter cases representing the 3 official phases for immediate CPA oversight
+export const INITIAL_CASES: TaxCase[] = [
+  {
+    id: 'case-ny-1040-001',
+    casoNumero: 'CASO-2024-NY-00101',
+    estado: 'NY',
+    clienteUserId: 'user-client-01',
+    clienteNombre: 'Carlos Mendoza',
+    clienteEmail: 'carlos.mendoza@email.com',
+    clienteTelefono: '+1-212-555-0144',
+    clienteData: {
+      ssnLast4: '4821',
+      tipoDeclaracion: 'Soltero',
+      ingresosEstimados: 68500,
+      anoFiscal: 2024,
+      direccion: '450 W 42nd St, Apt 14B, New York, NY 10036',
+      ocupacion: 'Software Engineer',
+      dependientes: 0
+    },
+    montoCobrado: 150,
+    clienteFirma: {
+      dataUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="50"><text x="10" y="30" font-family="cursive" font-size="20" fill="%231e3a8a">Carlos Mendoza</text></svg>',
+      fecha: '2024-10-15T14:30:00Z',
+      ip: '198.51.100.42'
+    },
+    cpaUserId: 'user-cpa-ny-01',
+    cpaCodigo: 'CPA-NY-12345',
+    cpaNombre: 'Lic. Pedro Baldera, CPA',
+    cpaFirma: null,
+    contratoUrl: null,
+    contratoStatus: 'PENDIENTE',
+    status: 'REALIZADA',
+    comisionStatus: 'PENDIENTE',
+    comisionMonto: 45,
+    carpetaPath: '/2024/NY/CASO-2024-NY-00101',
+    soportes: [
+      SAMPLE_DOCS_TEMPLATES[0],
+      SAMPLE_DOCS_TEMPLATES[1]
+    ],
+    historial: [
+      {
+        id: 'hist-1',
+        fecha: '2024-10-15T14:30:00Z',
+        accion: 'RADICACIÓN_INICIAL',
+        usuario: 'Carlos Mendoza',
+        detalle: 'Radicación de formulario 1040 y pago $150 procesado.'
+      }
+    ],
+    notasCPA: 'Revisión preliminar de retenciones federales W-2 y crédito estatal NY.',
+    createdAt: '2024-10-15T14:30:00Z',
+    updatedAt: '2024-10-15T14:30:00Z'
+  },
+  {
+    id: 'case-ny-1040-002',
+    casoNumero: 'CASO-2024-NY-00102',
+    estado: 'NY',
+    clienteUserId: 'user-client-02',
+    clienteNombre: 'Sofia Rodriguez',
+    clienteEmail: 'sofia.rodriguez@email.com',
+    clienteTelefono: '+1-718-555-0199',
+    clienteData: {
+      ssnLast4: '7730',
+      tipoDeclaracion: 'Cabeza de familia',
+      ingresosEstimados: 54200,
+      anoFiscal: 2024,
+      direccion: '82-11 Roosevelt Ave, Queens, NY 11372',
+      ocupacion: 'Healthcare Consultant',
+      dependientes: 1
+    },
+    montoCobrado: 150,
+    clienteFirma: {
+      dataUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="50"><text x="10" y="30" font-family="cursive" font-size="20" fill="%231e3a8a">Sofia Rodriguez</text></svg>',
+      fecha: '2024-10-16T10:15:00Z',
+      ip: '198.51.100.88'
+    },
+    cpaUserId: 'user-cpa-ny-01',
+    cpaCodigo: 'CPA-NY-12345',
+    cpaNombre: 'Lic. Pedro Baldera, CPA',
+    cpaFirma: null,
+    contratoUrl: null,
+    contratoStatus: 'PENDIENTE',
+    status: 'EN_TRAMITE',
+    comisionStatus: 'PENDIENTE',
+    comisionMonto: 45,
+    carpetaPath: '/2024/NY/CASO-2024-NY-00102',
+    soportes: [
+      SAMPLE_DOCS_TEMPLATES[0],
+      SAMPLE_DOCS_TEMPLATES[2],
+      SAMPLE_DOCS_TEMPLATES[3]
+    ],
+    historial: [
+      {
+        id: 'hist-2',
+        fecha: '2024-10-16T10:15:00Z',
+        accion: 'INICIO_AUDITORIA',
+        usuario: 'Lic. Pedro Baldera, CPA',
+        detalle: 'Verificación de Schedule A y deducciones de dependientes.'
+      }
+    ],
+    notasCPA: 'Cotejando comprobantes de deducciones médicas y cuidado de dependientes.',
+    createdAt: '2024-10-16T10:15:00Z',
+    updatedAt: '2024-10-16T11:00:00Z'
+  },
+  {
+    id: 'case-ny-1040-003',
+    casoNumero: 'CASO-2024-NY-00103',
+    estado: 'NY',
+    clienteUserId: 'user-client-03',
+    clienteNombre: 'Marcos De Leon',
+    clienteEmail: 'marcos.deleon@email.com',
+    clienteTelefono: '+1-646-555-0182',
+    clienteData: {
+      ssnLast4: '1925',
+      tipoDeclaracion: 'Casado conjunto',
+      ingresosEstimados: 92000,
+      anoFiscal: 2024,
+      direccion: '125 Broad St, New York, NY 10004',
+      ocupacion: 'Logistics Manager',
+      dependientes: 2
+    },
+    montoCobrado: 150,
+    clienteFirma: {
+      dataUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="50"><text x="10" y="30" font-family="cursive" font-size="20" fill="%231e3a8a">Marcos De Leon</text></svg>',
+      fecha: '2024-10-12T09:00:00Z',
+      ip: '198.51.100.12'
+    },
+    cpaUserId: 'user-cpa-ny-01',
+    cpaCodigo: 'CPA-NY-12345',
+    cpaNombre: 'Lic. Pedro Baldera, CPA',
+    cpaFirma: {
+      dataUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="220" height="60"><path d="M10,40 Q60,10 110,40 T210,30" stroke="%23047857" stroke-width="3" fill="none"/><text x="20" y="55" font-family="sans-serif" font-size="10" fill="%23065f46">Lic. Pedro Baldera CPA-NY-12345</text></svg>',
+      fecha: '2024-10-14T16:00:00Z',
+      declaracionLegal: 'Certificado bajo Circular 230 e IRC 7216'
+    },
+    contratoUrl: 'https://storage.example.com/contrato-00103.pdf',
+    contratoStatus: 'FIRMADO',
+    status: 'APROBADA',
+    comisionStatus: 'PENDIENTE',
+    comisionMonto: 45,
+    carpetaPath: '/2024/NY/CASO-2024-NY-00103',
+    soportes: [
+      SAMPLE_DOCS_TEMPLATES[0],
+      SAMPLE_DOCS_TEMPLATES[1],
+      SAMPLE_DOCS_TEMPLATES[7]
+    ],
+    historial: [
+      {
+        id: 'hist-3',
+        fecha: '2024-10-14T16:00:00Z',
+        accion: 'APROBACION_Y_FIRMA',
+        usuario: 'Lic. Pedro Baldera, CPA',
+        detalle: 'Expediente auditado y firmado. Comisión $45 generada.'
+      }
+    ],
+    notasCPA: 'Aprobación definitiva otorgada. Listo para e-file al IRS.',
+    createdAt: '2024-10-12T09:00:00Z',
+    updatedAt: '2024-10-14T16:00:00Z'
+  }
+];
 
 // Clean payouts slate (populated exclusively upon genuine online commission liquidation)
 export const INITIAL_PAYOUTS: PagoComision[] = [];

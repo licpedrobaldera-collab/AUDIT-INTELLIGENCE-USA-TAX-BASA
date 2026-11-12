@@ -33,6 +33,14 @@ export const HomeView: React.FC = () => {
       color: 'bg-blue-600',
     },
     {
+      title: 'Portal Ciudadano 1040 Autodinámico (IA)',
+      description: 'Llenado guiado 52 jurisdicciones con Semáforo IA 10/10, auto-ayuda en vivo, migración año anterior, estabilidad laboral y descarga preliminar Excel.',
+      route: '/portal-ciudadano',
+      icon: Zap,
+      badge: 'IA 10/10',
+      color: 'bg-violet-600',
+    },
+    {
       title: 'CPA Dashboard & Auditoría',
       description: 'Panel exclusivo del CPA con distribución gráfica en tiempo real (Recharts: Realizadas vs. En Trámite vs. Aprobadas), examen de soportes online y firma oficial.',
       route: '/cpa/dashboard',

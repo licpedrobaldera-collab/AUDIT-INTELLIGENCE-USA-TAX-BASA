@@ -66,7 +66,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [cases, setCases] = useState<TaxCase[]>(() => {
     try {
       const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}cases`);
-      return saved ? JSON.parse(saved) : INITIAL_CASES;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      return INITIAL_CASES;
     } catch {
       return INITIAL_CASES;
     }

@@ -40,6 +40,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCambiarClave }) => {
 
   const navLinks = [
     { label: 'Radicar Tax $150', route: '/tax', icon: FileText, badge: '$150' },
+    { label: 'Portal 1040 IA', route: '/portal-ciudadano', icon: Sparkles, badge: '10/10' },
     { label: 'CPA Dashboard', route: '/cpa/dashboard', icon: LayoutDashboard },
     { label: 'Google Drive', route: '/drive', icon: HardDrive, badge: 'Vault' },
     ...(currentUser?.rol === 'ADMIN' || currentUser?.rol === 'DEV'

@@ -47,7 +47,8 @@ export const CPADashboardView: React.FC = () => {
     firmarAprobarCPA,
     setSelectedCaseForModal,
     setSelectedDocForPreview,
-    navigate
+    navigate,
+    resetToDefaults
   } = useApp();
 
   // Active CPA user details
@@ -77,6 +78,7 @@ export const CPADashboardView: React.FC = () => {
   const featuredCase = cpaCases[0] || null;
 
   const [activeTabStatus, setActiveTabStatus] = useState<'TODOS' | 'REALIZADA' | 'EN_TRAMITE' | 'APROBADA'>('TODOS');
+  const [hoveredStatusKey, setHoveredStatusKey] = useState<string | null>(null);
   const [signatureDataUrl, setSignatureDataUrl] = useState('');
   const [savedNotesMessage, setSavedNotesMessage] = useState(false);
   const [editingNotes, setEditingNotes] = useState(featuredCase?.notasCPA || 'Auditoría fiscal preliminar: revisión de retenciones W-2, deducciones estándar y elegibilidad.');
@@ -86,14 +88,49 @@ export const CPADashboardView: React.FC = () => {
     .filter(c => c.status === 'APROBADA' && c.comisionStatus === 'PENDIENTE')
     .reduce((sum, c) => sum + (c.comisionMonto || 45), 0);
 
-  // Chart data for Recharts status distribution
+  const totalCasesCount = cpaCases.length;
+
+  // Chart data for Recharts status distribution with rich metadata for CPAs
   const chartData = [
-    { name: 'Realizadas', value: countRealizadas, color: '#2563eb' },
-    { name: 'En Trámite', value: countEnTramite, color: '#f59e0b' },
-    { name: 'Aprobadas', value: countAprobadas, color: '#10b981' },
+    {
+      name: 'Realizadas',
+      statusKey: 'REALIZADA' as const,
+      value: countRealizadas,
+      color: '#2563eb', // Blue-600
+      accentColor: '#3b82f6',
+      badgeBg: 'bg-blue-100 text-blue-800 border-blue-200',
+      pillBg: 'bg-blue-600',
+      desc: 'Expedientes radicados pendientes de asignación o revisión',
+      financial: `$${countRealizadas * 150} USD cobrado cliente`,
+      subdetail: 'Formularios 1040 ingresados al sistema'
+    },
+    {
+      name: 'En Trámite',
+      statusKey: 'EN_TRAMITE' as const,
+      value: countEnTramite,
+      color: '#f59e0b', // Amber-500
+      accentColor: '#fbbf24',
+      badgeBg: 'bg-amber-100 text-amber-800 border-amber-200',
+      pillBg: 'bg-amber-500',
+      desc: 'Cotejo de formularios W-2, 1099 y deducciones fiscales',
+      financial: 'Auditoría en curso bajo Circular 230',
+      subdetail: 'En cotejo de comprobantes y anexos'
+    },
+    {
+      name: 'Aprobadas',
+      statusKey: 'APROBADA' as const,
+      value: countAprobadas,
+      color: '#10b981', // Emerald-500
+      accentColor: '#34d399',
+      badgeBg: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      pillBg: 'bg-emerald-600',
+      desc: 'Auditadas y certificadas con firma oficial del CPA',
+      financial: `$${montoAprobadas} USD comisión generada ($45/caso)`,
+      subdetail: 'Listas para e-file y liquidación bancaria'
+    },
   ];
 
-  const totalCasesCount = cpaCases.length;
+  const hoveredItem = chartData.find(item => item.statusKey === hoveredStatusKey) || null;
 
   const handleQuickSignApprove = () => {
     if (!featuredCase) return;
@@ -238,100 +275,288 @@ export const CPADashboardView: React.FC = () => {
 
       {/* RECHARTS DATA VISUALIZATION SECTION: Distribution of Case Statuses */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-4">
-          <div>
-            <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-blue-600" />
-              Distribución Gráfica de Casos (Recharts Oversight)
+        {/* Section Header with Status Filter Pills */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-slate-100 pb-5">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-bold">
+              <PieChartIcon className="w-3.5 h-3.5" />
+              <span>Recharts Interactive Visual Oversight</span>
+            </div>
+            <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+              Distribución de Casos Fiscales
             </h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Visualización interactiva en tiempo real: Realizadas vs. En Trámite vs. Aprobadas
+            <p className="text-xs text-slate-500">
+              Supervisión visual en tiempo real: Realizadas vs. En Trámite vs. Aprobadas
             </p>
           </div>
-          <div className="text-xs font-mono font-semibold px-3 py-1 bg-slate-100 rounded-lg text-slate-700">
-            Total en Gestión: {totalCasesCount} casos
+
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+              <button
+                onClick={() => setActiveTabStatus('TODOS')}
+                className={`px-3 py-1.5 rounded-lg transition-all ${
+                  activeTabStatus === 'TODOS'
+                    ? 'bg-white text-slate-900 shadow-xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                Todos ({totalCasesCount})
+              </button>
+              <button
+                onClick={() => setActiveTabStatus('REALIZADA')}
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                  activeTabStatus === 'REALIZADA'
+                    ? 'bg-blue-600 text-white shadow-xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-blue-500 inline-block" />
+                Realizadas ({countRealizadas})
+              </button>
+              <button
+                onClick={() => setActiveTabStatus('EN_TRAMITE')}
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                  activeTabStatus === 'EN_TRAMITE'
+                    ? 'bg-amber-500 text-white shadow-xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-amber-400 inline-block" />
+                En Trámite ({countEnTramite})
+              </button>
+              <button
+                onClick={() => setActiveTabStatus('APROBADA')}
+                className={`px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                  activeTabStatus === 'APROBADA'
+                    ? 'bg-emerald-600 text-white shadow-xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
+                Aprobadas ({countAprobadas})
+              </button>
+            </div>
+
+            {totalCasesCount === 0 && (
+              <button
+                onClick={resetToDefaults}
+                className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold transition-colors"
+              >
+                Cargar Datos Demo
+              </button>
+            )}
           </div>
         </div>
 
-        {totalCasesCount === 0 ? (
-          <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 space-y-3">
-            <Inbox className="w-10 h-10 text-slate-400 mx-auto" />
-            <h4 className="font-bold text-slate-800 text-sm">Bandeja Lista para Nuevos Casos Reales</h4>
-            <p className="text-xs text-slate-500 max-w-md mx-auto">
-              Aún no hay casos asignados a esta jurisdicción. Los clientes y contribuyentes pueden radicar inmediatamente su declaración en la sección de radicación para comenzar a generar comisiones de $45.
-            </p>
-            <button
-              onClick={() => navigate('/tax')}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs"
-            >
-              Radicar Nuevo Caso Real ($150)
-            </button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Pie Chart */}
-            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block flex items-center gap-1.5">
-                <PieChartIcon className="w-4 h-4 text-indigo-600" />
-                Porcentaje por Estatus
+        {/* Main Grid: Recharts PieChart (Left) + Detailed Oversight Cards (Right) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          {/* Recharts PieChart Container */}
+          <div className="lg:col-span-6 bg-slate-50/70 p-6 rounded-3xl border border-slate-200/80 flex flex-col items-center justify-center relative">
+            <div className="w-full flex items-center justify-between mb-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                <PieChartIcon className="w-4 h-4 text-blue-600" />
+                Gráfico Circular de Casos
               </span>
-              <div className="h-64 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={chartData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={55}
-                      outerRadius={85}
-                      paddingAngle={4}
-                      dataKey="value"
-                    >
-                      {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
+              <span className="text-[11px] font-mono text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+                Filtro Activo: {activeTabStatus}
+              </span>
+            </div>
+
+            <div className="relative w-full h-72 sm:h-80 flex items-center justify-center">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={totalCasesCount > 0 ? chartData : [{ name: 'Sin casos', statusKey: 'TODOS', value: 1, color: '#e2e8f0', desc: '', financial: '', badgeBg: '', pillBg: '', subdetail: '' }]}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={72}
+                    outerRadius={108}
+                    paddingAngle={totalCasesCount > 1 ? 4 : 0}
+                    dataKey="value"
+                    nameKey="name"
+                    stroke="#ffffff"
+                    strokeWidth={3}
+                    onClick={(entry: any) => {
+                      if (entry?.statusKey && entry.statusKey !== 'TODOS') {
+                        setActiveTabStatus(entry.statusKey);
+                      }
+                    }}
+                    onMouseEnter={(entry: any) => {
+                      if (entry?.statusKey && entry.statusKey !== 'TODOS') {
+                        setHoveredStatusKey(entry.statusKey);
+                      }
+                    }}
+                    onMouseLeave={() => setHoveredStatusKey(null)}
+                  >
+                    {(totalCasesCount > 0 ? chartData : [{ color: '#e2e8f0' }]).map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={entry.color}
+                        className="cursor-pointer transition-opacity duration-200 hover:opacity-90"
+                      />
+                    ))}
+                  </Pie>
+                  {totalCasesCount > 0 && (
                     <Tooltip
-                      formatter={(value: any) => [`${value} casos`, 'Cantidad']}
-                      contentStyle={{ backgroundColor: '#0f172a', color: '#fff', borderRadius: '8px', fontSize: '12px' }}
+                      content={({ active, payload }: any) => {
+                        if (active && payload && payload.length) {
+                          const item = payload[0].payload;
+                          const pct = totalCasesCount > 0 ? ((item.value / totalCasesCount) * 100).toFixed(1) : '0';
+                          return (
+                            <div className="bg-slate-900/95 text-white p-3.5 rounded-xl shadow-2xl border border-slate-700 text-xs min-w-[210px] space-y-1.5 backdrop-blur-md">
+                              <div className="flex items-center justify-between gap-2 border-b border-slate-700/80 pb-1.5">
+                                <span className="font-bold flex items-center gap-1.5">
+                                  <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: item.color }} />
+                                  {item.name}
+                                </span>
+                                <span className="font-mono text-emerald-400 font-bold">{pct}%</span>
+                              </div>
+                              <div className="flex justify-between text-slate-300">
+                                <span>Volumen:</span>
+                                <span className="font-bold text-white">{item.value} {item.value === 1 ? 'caso' : 'casos'}</span>
+                              </div>
+                              <div className="text-[11px] text-slate-400 font-sans">
+                                {item.desc}
+                              </div>
+                              <div className="pt-1 text-[11px] font-semibold border-t border-slate-800 text-emerald-400">
+                                {item.financial}
+                              </div>
+                              <div className="text-[10px] text-slate-400 italic text-right pt-0.5">
+                                Clic para filtrar expedientes
+                              </div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
                     />
-                    <Legend
-                      verticalAlign="bottom"
-                      height={36}
-                      formatter={(value) => <span className="text-xs font-medium text-slate-700">{value}</span>}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                  )}
+                  <Legend
+                    verticalAlign="bottom"
+                    height={40}
+                    formatter={(value) => (
+                      <span className="text-xs font-semibold text-slate-700 px-1 hover:text-blue-600 transition-colors cursor-pointer">
+                        {value}
+                      </span>
+                    )}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+
+              {/* Dynamic Center Metric Inside the Donut Hole */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none select-none text-center">
+                <span className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-none">
+                  {hoveredItem ? hoveredItem.value : totalCasesCount}
+                </span>
+                <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mt-1">
+                  {hoveredItem ? hoveredItem.name : 'Total Casos'}
+                </span>
+                <span className="text-[10px] font-mono font-bold text-emerald-700 mt-0.5">
+                  {hoveredItem
+                    ? hoveredItem.statusKey === 'APROBADA'
+                      ? `$${montoAprobadas} USD`
+                      : totalCasesCount > 0
+                      ? `${((hoveredItem.value / totalCasesCount) * 100).toFixed(0)}% del total`
+                      : '0%'
+                    : `$${balancePorPagar} USD por cobrar`}
+                </span>
               </div>
             </div>
 
-            {/* Bar Chart */}
-            <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 block flex items-center gap-1.5">
-                <TrendingUp className="w-4 h-4 text-emerald-600" />
-                Volumen Comparativo por Fase
+            <p className="text-[11px] text-slate-500 text-center mt-2 italic">
+              Pase el cursor sobre las secciones para ver detalles o haga clic en un sector para filtrar la lista.
+            </p>
+          </div>
+
+          {/* Detailed Status Oversight Cards (Right Column) */}
+          <div className="lg:col-span-6 space-y-3.5">
+            <div className="flex items-center justify-between pb-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                Desglose Analítico por Fase
               </span>
-              <div className="h-64 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                    <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                    <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} />
-                    <Tooltip
-                      formatter={(value: any) => [`${value} casos`, 'Total']}
-                      contentStyle={{ backgroundColor: '#0f172a', color: '#fff', borderRadius: '8px', fontSize: '12px' }}
+              <span className="text-xs font-mono text-slate-500">
+                Comisión: $45.00 USD / caso
+              </span>
+            </div>
+
+            {chartData.map((item) => {
+              const pct = totalCasesCount > 0 ? Math.round((item.value / totalCasesCount) * 100) : 0;
+              const isSelected = activeTabStatus === item.statusKey;
+              const isHovered = hoveredStatusKey === item.statusKey;
+
+              return (
+                <div
+                  key={item.statusKey}
+                  onClick={() => setActiveTabStatus(item.statusKey)}
+                  onMouseEnter={() => setHoveredStatusKey(item.statusKey)}
+                  onMouseLeave={() => setHoveredStatusKey(null)}
+                  className={`p-4 rounded-2xl border transition-all cursor-pointer relative overflow-hidden ${
+                    isSelected
+                      ? 'border-slate-900 ring-2 ring-slate-900 bg-white shadow-md'
+                      : isHovered
+                      ? 'border-blue-400 bg-blue-50/40 shadow-xs'
+                      : 'border-slate-200 bg-white hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className={`w-2.5 h-2.5 rounded-full ${item.pillBg}`} />
+                        <span className="text-xs font-black uppercase tracking-wider text-slate-900">
+                          {item.name}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${item.badgeBg}`}>
+                          {pct}% del total
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600 font-medium">
+                        {item.desc}
+                      </p>
+                      <p className="text-[11px] text-slate-400 font-mono">
+                        {item.subdetail}
+                      </p>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <div className="text-2xl font-black text-slate-900">
+                        {item.value} <span className="text-xs font-bold text-slate-400">casos</span>
+                      </div>
+                      <span className="text-[11px] font-bold text-emerald-700 block font-mono">
+                        {item.statusKey === 'APROBADA'
+                          ? `$${item.value * 45} USD ganados`
+                          : item.statusKey === 'REALIZADA'
+                          ? `$${item.value * 150} USD ingresado`
+                          : 'Pendiente auditoría'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Visual Progress Bar */}
+                  <div className="mt-3 w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-500 rounded-full ${item.pillBg}`}
+                      style={{ width: `${pct}%` }}
                     />
-                    <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                      {chartData.map((entry, index) => (
-                        <Cell key={`bar-${index}`} fill={entry.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Quick Summary Strip */}
+            <div className="pt-2 flex flex-wrap items-center justify-between text-xs text-slate-600 font-medium border-t border-slate-100">
+              <span className="flex items-center gap-1.5">
+                <DollarSign className="w-4 h-4 text-emerald-600" />
+                Ingresos brutos acumulados: <strong className="text-slate-900">${totalCasesCount * 150} USD</strong>
+              </span>
+              <button
+                onClick={() => navigate('/tax')}
+                className="text-blue-600 hover:text-blue-700 font-bold inline-flex items-center gap-1 hover:underline"
+              >
+                + Radicar nuevo caso ($150)
+              </button>
             </div>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Primary Active Case for Audit, Signing and Notes */}
