@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { PayoutReceiptModal } from '../components/PayoutReceiptModal';
+import { SelfHealingV4Panel } from '../components/SelfHealingV4Panel';
 import { PagoComision } from '../types';
 import {
   FileSpreadsheet,
@@ -18,7 +19,8 @@ import {
   ShieldCheck,
   Search,
   Filter,
-  ArrowUpRight
+  ArrowUpRight,
+  Globe
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -34,7 +36,8 @@ export const AdminMatrizView: React.FC = () => {
     systemBankAccount,
     actualizarBancoSistema,
     pagosAfiliacion,
-    aprobarTransferenciaAfiliacion
+    aprobarTransferenciaAfiliacion,
+    navigate
   } = useApp();
 
   const [activeReceipt, setActiveReceipt] = useState<PagoComision | null>(null);
@@ -133,7 +136,13 @@ export const AdminMatrizView: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => navigate('/global')}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-xs transition-colors"
+          >
+            <Globe className="w-4 h-4" /> GlobalTaxEngine V3.0
+          </button>
           <button
             onClick={() => exportarExcelCSV('matriz_completa')}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors"
@@ -653,6 +662,9 @@ export const AdminMatrizView: React.FC = () => {
           </div>
         </form>
       </div>
+
+      {/* SECTION 6: SELF-HEALING V4.0, VALIDACIÓN 100/100 & DESPLIEGUE ZERO-COST */}
+      <SelfHealingV4Panel />
     </div>
   );
 };

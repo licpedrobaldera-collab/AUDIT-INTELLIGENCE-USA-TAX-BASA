@@ -17,7 +17,8 @@ import {
   TrendingUp,
   FolderTree,
   Send,
-  Zap
+  Zap,
+  Globe
 } from 'lucide-react';
 
 export const HomeView: React.FC = () => {
@@ -39,6 +40,14 @@ export const HomeView: React.FC = () => {
       icon: Zap,
       badge: 'IA 10/10',
       color: 'bg-violet-600',
+    },
+    {
+      title: 'GlobalTaxEngine V3.0 (Multi-País)',
+      description: 'Expansión mundial (DO, ES, MX, CO, GT, IT, JP, CN, RU, US + ISO): normativa dinámica, actualización horaria IA, terna certificada y Split Payments.',
+      route: '/global',
+      icon: Globe,
+      badge: 'Global V3.0',
+      color: 'bg-cyan-600',
     },
     {
       title: 'CPA Dashboard & Auditoría',

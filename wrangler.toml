@@ -1,0 +1,7 @@
+name = "audit-intelligence-global-tax"
+compatibility_date = "2026-01-01"
+pages_build_output_dir = "dist"
+
+[vars]
+NODE_ENV = "production"
+GLOBAL_ENGINE_VERSION = "4.0"
