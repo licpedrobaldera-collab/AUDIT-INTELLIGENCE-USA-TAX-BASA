@@ -40,6 +40,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCambiarClave }) => {
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
 
   const navLinks = [
+    { label: 'Declaración IA', route: '/asistente', icon: Sparkles, badge: 'Fácil 6P' },
     { label: 'Radicar Tax $150', route: '/tax', icon: FileText, badge: '$150' },
     { label: 'Portal 1040 IA', route: '/portal-ciudadano', icon: Sparkles, badge: '10/10' },
     { label: 'Global V3.0', route: '/global', icon: Globe, badge: 'World' },

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { PayoutReceiptModal } from '../components/PayoutReceiptModal';
 import { SelfHealingV4Panel } from '../components/SelfHealingV4Panel';
 import { PagoComision } from '../types';
+import type { ProductionApplicationRecord } from '../services/globalTaxEngine';
 import {
   FileSpreadsheet,
   Download,
@@ -45,6 +46,25 @@ export const AdminMatrizView: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('TODOS');
   const [stateFilter, setStateFilter] = useState<string>('TODOS');
   const [adminNotice, setAdminNotice] = useState<string | null>(null);
+  const [liveProdApps, setLiveProdApps] = useState<ProductionApplicationRecord[]>([]);
+
+  const loadLiveProdApps = async () => {
+    try {
+      const res = await fetch('/api/production-applications');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data.applications)) {
+          setLiveProdApps(data.applications);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    void loadLiveProdApps();
+  }, []);
 
   // Editable System Bank State (Admin can change to any bank at any time)
   const [bankForm, setBankForm] = useState({
@@ -663,7 +683,83 @@ export const AdminMatrizView: React.FC = () => {
         </form>
       </div>
 
-      {/* SECTION 6: SELF-HEALING V4.0, VALIDACIÓN 100/100 & DESPLIEGUE ZERO-COST */}
+      {/* SECTION 6: REGISTROS REALES EN PRODUCCIÓN & TRAZABILIDAD EN LÍNEA */}
+      <div className="bg-white rounded-3xl border border-emerald-200 shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-emerald-100 flex flex-wrap items-center justify-between gap-3 bg-emerald-50/40">
+          <div>
+            <h3 className="font-black text-base text-slate-900 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              REGISTROS REALES EN PRODUCCIÓN & TRAZABILIDAD DE PROCESO ({liveProdApps.length})
+            </h3>
+            <p className="text-xs text-slate-600">
+              Aplicaciones en línea recibidas desde Registro Multi-País y Asistente Guiado IA (Paso 1 a 6).
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void loadLiveProdApps()}
+              className="px-3 py-1.5 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50"
+            >
+              Actualizar En Línea
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/asistente')}
+              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold"
+            >
+              Abrir Asistente 6 Pasos
+            </button>
+          </div>
+        </div>
+
+        <div className="divide-y divide-slate-100">
+          {liveProdApps.length === 0 ? (
+            <div className="p-6 text-center text-xs text-slate-500">
+              Sin aplicaciones nuevas en memoria aún. Crea un registro desde /registro o /asistente para monitorear su flujo aquí.
+            </div>
+          ) : (
+            liveProdApps.map(app => (
+              <div key={app.id} className="p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3 hover:bg-slate-50">
+                <div className="space-y-1 text-xs">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-black">
+                      ● REGISTRO REAL
+                    </span>
+                    <span className="font-mono font-bold text-blue-700">{app.id}</span>
+                    <span className="font-bold text-slate-900">{app.applicantName}</span>
+                    <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[10px]">
+                      {app.role} · {app.countryCode} ({app.currency})
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-slate-500 font-mono">
+                    Paso {app.currentStep}/6 ({app.status}) · Evidencias: {app.evidenceCount} · Respuestas IA: {app.questionsAnswered}/{app.totalQuestions} · Guardado: {new Date(app.lastSavedAt).toLocaleString()}
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-1">
+                  {app.stepsTrace.map(st => (
+                    <span
+                      key={st.stepNumber}
+                      className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                        st.status === 'COMPLETADO'
+                          ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                          : st.status === 'EN_CURSO'
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-slate-100 text-slate-500 border-slate-200'
+                      }`}
+                    >
+                      {st.stepNumber}.{st.key}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* SECTION 7: SELF-HEALING V4.0, VALIDACIÓN 100/100 & DESPLIEGUE ZERO-COST */}
       <SelfHealingV4Panel />
     </div>
   );

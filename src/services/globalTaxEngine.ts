@@ -164,8 +164,210 @@ export const GLOBAL_TAX_MATRIX: Record<string, TaxJurisdictionRule> = {
       CORPORATE: ['KND 1151006 (Corporate Profit Tax)', 'KND 1151001 (VAT)'],
       NON_PROFIT: ['KND 1151006 (Sheet 07 - Targeted Financing)']
     }
+  },
+  CA: {
+    countryCode: 'CA',
+    countryName: 'Canadá',
+    defaultLanguage: 'en',
+    currency: 'CAD',
+    taxAuthority: 'CRA (Canada Revenue Agency)',
+    officialPortal: 'https://www.canada.ca/en/revenue-agency.html',
+    activityStandard: 'NAICS',
+    requiredForms: {
+      INDIVIDUAL: ['T1 General Income Tax Return', 'T4 Summary'],
+      CORPORATE: ['T2 Corporation Income Tax Return', 'GST/HST Return'],
+      NON_PROFIT: ['T3010 Registered Charity Return']
+    }
+  },
+  BR: {
+    countryCode: 'BR',
+    countryName: 'Brasil',
+    defaultLanguage: 'pt',
+    currency: 'BRL',
+    taxAuthority: 'Receita Federal do Brasil (RFB)',
+    officialPortal: 'https://www.gov.br/receitafederal',
+    activityStandard: 'CIIU',
+    requiredForms: {
+      INDIVIDUAL: ['DIRPF (Imposto de Renda Pessoa Física)'],
+      CORPORATE: ['ECF / ECD (IRPJ & CSLL)', 'EFD-Contribuições'],
+      NON_PROFIT: ['ECF (Entidades Imunes/Isentas)']
+    }
+  },
+  FR: {
+    countryCode: 'FR',
+    countryName: 'Francia',
+    defaultLanguage: 'fr',
+    currency: 'EUR',
+    taxAuthority: 'DGFiP (Direction Générale des Finances Publiques)',
+    officialPortal: 'https://www.impots.gouv.fr',
+    activityStandard: 'CNAE',
+    requiredForms: {
+      INDIVIDUAL: ['Déclaration 2042 (Impôt sur le Revenu)'],
+      CORPORATE: ['Liasse Fiscale 2065 (IS)', 'TVA CA3'],
+      NON_PROFIT: ['Déclaration 2070 (Organismes Sans But Lucratif)']
+    }
+  },
+  DE: {
+    countryCode: 'DE',
+    countryName: 'Alemania',
+    defaultLanguage: 'en',
+    currency: 'EUR',
+    taxAuthority: 'BZSt / Finanzamt (ELSTER)',
+    officialPortal: 'https://www.elster.de',
+    activityStandard: 'CNAE',
+    requiredForms: {
+      INDIVIDUAL: ['Einkommensteuererklärung (ESt 1 A)'],
+      CORPORATE: ['Körperschaftsteuererklärung (KSt 1)', 'USt 2 A'],
+      NON_PROFIT: ['Anlage Gem (Gemeinnützige Körperschaften)']
+    }
+  },
+  GB: {
+    countryCode: 'GB',
+    countryName: 'Reino Unido (UK)',
+    defaultLanguage: 'en',
+    currency: 'GBP',
+    taxAuthority: 'HMRC (HM Revenue & Customs)',
+    officialPortal: 'https://www.gov.uk/government/organisations/hm-revenue-customs',
+    activityStandard: 'ISIC',
+    requiredForms: {
+      INDIVIDUAL: ['SA100 Self Assessment Tax Return'],
+      CORPORATE: ['CT600 Company Tax Return', 'VAT100'],
+      NON_PROFIT: ['CT600 (Charity Exemption Supplement)']
+    }
+  },
+  PA: {
+    countryCode: 'PA',
+    countryName: 'Panamá',
+    defaultLanguage: 'es',
+    currency: 'USD',
+    taxAuthority: 'DGI Panamá (e-Tax 2.0)',
+    officialPortal: 'https://dgi.mef.gob.pa',
+    activityStandard: 'CIIU',
+    requiredForms: {
+      INDIVIDUAL: ['Formulario 21 (Renta Persona Natural)'],
+      CORPORATE: ['Formulario 22 (Renta Persona Jurídica)', 'ITBMS 430'],
+      NON_PROFIT: ['Declaración Informativa ONG / Sin Fines de Lucro']
+    }
+  },
+  CR: {
+    countryCode: 'CR',
+    countryName: 'Costa Rica',
+    defaultLanguage: 'es',
+    currency: 'CRC',
+    taxAuthority: 'Ministerio de Hacienda (ATV / Tribu-CR)',
+    officialPortal: 'https://www.hacienda.go.cr',
+    activityStandard: 'CIIU',
+    requiredForms: {
+      INDIVIDUAL: ['D-101 (Declaración Impuesto Sobre la Renta)', 'D-104 (IVA)'],
+      CORPORATE: ['D-101 Sociedades', 'D-104 IVA', 'RTBF'],
+      NON_PROFIT: ['D-101 Exento Art. 3']
+    }
+  },
+  AR: {
+    countryCode: 'AR',
+    countryName: 'Argentina',
+    defaultLanguage: 'es',
+    currency: 'ARS',
+    taxAuthority: 'ARCA (ex AFIP)',
+    officialPortal: 'https://www.afip.gob.ar',
+    activityStandard: 'CIIU',
+    requiredForms: {
+      INDIVIDUAL: ['F.711 Ganancias Personas Humanas', 'F.762 Bienes Personales'],
+      CORPORATE: ['F.713 Ganancias Sociedades', 'F.2002 IVA'],
+      NON_PROFIT: ['F.713 Exento Art. 26']
+    }
+  },
+  CL: {
+    countryCode: 'CL',
+    countryName: 'Chile',
+    defaultLanguage: 'es',
+    currency: 'CLP',
+    taxAuthority: 'SII (Servicio de Impuestos Internos)',
+    officialPortal: 'https://www.sii.cl',
+    activityStandard: 'CIIU',
+    requiredForms: {
+      INDIVIDUAL: ['Formulario 22 (Operación Renta Global Complementario)'],
+      CORPORATE: ['Formulario 22 (Primera Categoría)', 'Formulario 29 (IVA)'],
+      NON_PROFIT: ['Formulario 22 (Régimen Corporaciones/Fundaciones)']
+    }
+  },
+  PE: {
+    countryCode: 'PE',
+    countryName: 'Perú',
+    defaultLanguage: 'es',
+    currency: 'PEN',
+    taxAuthority: 'SUNAT',
+    officialPortal: 'https://www.sunat.gob.pe',
+    activityStandard: 'CIIU',
+    requiredForms: {
+      INDIVIDUAL: ['Formulario Virtual 709 (Renta Anual Personas Naturales)'],
+      CORPORATE: ['Formulario Virtual 710 (Renta Anual Tercera Categoría)', 'PDT 621 IGV'],
+      NON_PROFIT: ['Formulario Virtual 710 (Exoneración Art. 19)']
+    }
+  },
+  PR: {
+    countryCode: 'PR',
+    countryName: 'Puerto Rico',
+    defaultLanguage: 'es',
+    currency: 'USD',
+    taxAuthority: 'Departamento de Hacienda (SURI)',
+    officialPortal: 'https://suri.hacienda.pr.gov',
+    activityStandard: 'NAICS',
+    requiredForms: {
+      INDIVIDUAL: ['Planilla de Contribución sobre Ingresos (Modelo 482)'],
+      CORPORATE: ['Planilla de Corporaciones (Modelo 480.20)', 'IVU'],
+      NON_PROFIT: ['Planilla Informativa Entidades Exentas (480.70)']
+    }
   }
 };
+
+export interface ProductionStepTrace {
+  stepNumber: number;
+  key: 'REGISTRO' | 'EVIDENCIAS' | 'CUESTIONARIO_IA' | 'AUDITORIA_100' | 'FIRMA' | 'PAGO_RESULTADOS';
+  label: string;
+  status: 'COMPLETADO' | 'EN_CURSO' | 'PENDIENTE';
+  timestamp?: string;
+}
+
+export interface ProductionApplicationRecord {
+  id: string;
+  applicantName: string;
+  role: string;
+  email: string;
+  phone?: string;
+  countryCode: string;
+  countryName: string;
+  language: string;
+  currency: string;
+  entityType: EntityType;
+  currentStep: number;
+  totalSteps: number;
+  status: 'REGISTRO_REAL_ACTIVO' | 'EN_PROGRESO' | 'AUDITADO_100' | 'COMPLETADO_PAGADO';
+  isRealProduction: boolean;
+  stepsTrace: ProductionStepTrace[];
+  evidenceCount: number;
+  questionsAnswered: number;
+  totalQuestions: number;
+  complianceScore: number;
+  estimatedTaxAmount?: number;
+  feePaid?: number;
+  lastSavedAt: string;
+  createdAt: string;
+}
+
+export function formatCurrencyForJurisdiction(amount: number, currency: string): string {
+  const cleanCurr = (currency || 'USD').split(' ')[0].trim().toUpperCase();
+  const safeVal = Number.isFinite(amount) ? amount : 0;
+  try {
+    return new Intl.NumberFormat('es-US', {
+      style: 'currency',
+      currency: cleanCurr.length === 3 ? cleanCurr : 'USD',
+      maximumFractionDigits: 2
+    }).format(safeVal);
+  } catch {
+    return `${cleanCurr} ${safeVal.toLocaleString()}`;
+  }
+}
 
 export function getJurisdictionRule(countryCode: string): TaxJurisdictionRule {
   const code = countryCode.trim().toUpperCase() || 'US';
@@ -176,7 +378,7 @@ export function getJurisdictionRule(countryCode: string): TaxJurisdictionRule {
     countryCode: code,
     countryName: `Jurisdicción Internacional (${code})`,
     defaultLanguage: 'en',
-    currency: 'USD / Local',
+    currency: 'USD',
     taxAuthority: `Autoridad Tributaria Nacional (${code})`,
     officialPortal: `https://www.google.com/search?q=tax+authority+${encodeURIComponent(code)}`,
     activityStandard: 'ISIC',

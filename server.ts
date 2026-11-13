@@ -5,7 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
 import { getJurisdictionRule } from './src/services/globalTaxEngine.ts';
-import type { EntityType } from './src/services/globalTaxEngine.ts';
+import type { EntityType, ProductionApplicationRecord, ProductionStepTrace } from './src/services/globalTaxEngine.ts';
 import { runDeterministicTaxValidation } from './src/services/selfHealingCore.ts';
 import type {
   FinalClientAuditReport,
@@ -514,6 +514,31 @@ interface PagoAfiliacionRecord {
 const pagosAfiliacionStore: PagoAfiliacionRecord[] = [];
 let nextPagoId = 1;
 
+const productionApplicationsStore: ProductionApplicationRecord[] = [];
+
+function buildStepsTrace(currentStep: number, existing?: ProductionStepTrace[]): ProductionStepTrace[] {
+  const labels: Array<{ stepNumber: number; key: ProductionStepTrace['key']; label: string }> = [
+    { stepNumber: 1, key: 'REGISTRO', label: 'Registro Real & País' },
+    { stepNumber: 2, key: 'EVIDENCIAS', label: 'Aportes & Evidencias' },
+    { stepNumber: 3, key: 'CUESTIONARIO_IA', label: 'Preguntas Fáciles IA' },
+    { stepNumber: 4, key: 'AUDITORIA_100', label: 'Validación 100/100' },
+    { stepNumber: 5, key: 'FIRMA', label: 'Firma Digital' },
+    { stepNumber: 6, key: 'PAGO_RESULTADOS', label: 'Pago & Resultados' }
+  ];
+
+  const nowIso = new Date().toISOString();
+  return labels.map(item => {
+    const prev = existing?.find(s => s.stepNumber === item.stepNumber);
+    const status: ProductionStepTrace['status'] =
+      item.stepNumber < currentStep ? 'COMPLETADO' : item.stepNumber === currentStep ? 'EN_CURSO' : 'PENDIENTE';
+    return {
+      ...item,
+      status,
+      timestamp: status === 'COMPLETADO' ? prev?.timestamp || nowIso : status === 'EN_CURSO' ? nowIso : undefined
+    };
+  });
+}
+
 async function startServer() {
   const app = express();
   const PORT = Number(process.env.PORT || 3000);
@@ -609,6 +634,127 @@ async function startServer() {
       const msg = err instanceof Error ? err.message : 'Error generando declaración autónoma.';
       res.status(500).json({ ok: false, error: msg });
     }
+  });
+
+  // Production Real-Time Applications & Traceability
+  app.get('/api/production-applications', (_req: Request, res: Response) => {
+    res.json({
+      ok: true,
+      total: productionApplicationsStore.length,
+      applications: productionApplicationsStore
+    });
+  });
+
+  app.post('/api/production-applications', (req: Request, res: Response) => {
+    const body = (req.body || {}) as Partial<ProductionApplicationRecord>;
+    const nowIso = new Date().toISOString();
+    const countryCode = (body.countryCode || 'US').toUpperCase();
+    const rule = getJurisdictionRule(countryCode);
+    const currentStep = Math.max(1, Math.min(6, Number(body.currentStep || 1)));
+    const existingIdx = body.id ? productionApplicationsStore.findIndex(a => a.id === body.id) : -1;
+
+    if (existingIdx >= 0) {
+      const prev = productionApplicationsStore[existingIdx];
+      const updated: ProductionApplicationRecord = {
+        ...prev,
+        ...body,
+        countryCode: rule.countryCode,
+        countryName: rule.countryName,
+        currency: body.currency || rule.currency,
+        currentStep,
+        totalSteps: 6,
+        isRealProduction: true,
+        stepsTrace: buildStepsTrace(
+          body.status === 'COMPLETADO_PAGADO' ? 7 : currentStep,
+          prev.stepsTrace
+        ),
+        lastSavedAt: nowIso
+      };
+      productionApplicationsStore[existingIdx] = updated;
+      res.json({ ok: true, application: updated });
+      return;
+    }
+
+    const newApp: ProductionApplicationRecord = {
+      id: body.id || `APP-REAL-${Date.now().toString().slice(-6)}`,
+      applicantName: body.applicantName || 'Contribuyente Registrado',
+      role: body.role || 'CLIENTE',
+      email: body.email || '',
+      phone: body.phone || '',
+      countryCode: rule.countryCode,
+      countryName: rule.countryName,
+      language: body.language || rule.defaultLanguage,
+      currency: body.currency || rule.currency,
+      entityType: body.entityType || 'INDIVIDUAL',
+      currentStep,
+      totalSteps: 6,
+      status: body.status || 'REGISTRO_REAL_ACTIVO',
+      isRealProduction: true,
+      stepsTrace: buildStepsTrace(body.status === 'COMPLETADO_PAGADO' ? 7 : currentStep),
+      evidenceCount: Number(body.evidenceCount || 0),
+      questionsAnswered: Number(body.questionsAnswered || 0),
+      totalQuestions: Number(body.totalQuestions || 6),
+      complianceScore: Number(body.complianceScore || 0),
+      estimatedTaxAmount: body.estimatedTaxAmount,
+      feePaid: body.feePaid,
+      lastSavedAt: nowIso,
+      createdAt: nowIso
+    };
+
+    productionApplicationsStore.unshift(newApp);
+    if (productionApplicationsStore.length > 100) {
+      productionApplicationsStore.length = 100;
+    }
+    res.json({ ok: true, application: newApp });
+  });
+
+  // Plain-language AI assistant for non-expert users (with deterministic fallback)
+  app.post('/api/assistant/explain-step', async (req: Request, res: Response) => {
+    const { topic, countryCode, language, questionContext } = (req.body || {}) as {
+      topic?: string;
+      countryCode?: string;
+      language?: string;
+      questionContext?: string;
+    };
+
+    const rule = getJurisdictionRule(countryCode || 'US');
+    const lang = language || rule.defaultLanguage || 'es';
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    if (apiKey && apiKey !== 'MY_GEMINI_API_KEY' && apiKey.trim().length > 10) {
+      try {
+        const ai = new GoogleGenAI({
+          apiKey,
+          httpOptions: { headers: { 'User-Agent': 'aistudio-build' } }
+        });
+        const response = await ai.models.generateContent({
+          model: 'gemini-4-hydrogen',
+          contents: `Explica de forma extremadamente sencilla (como para alguien sin estudios de contabilidad ni leyes) el siguiente tema fiscal en idioma ISO "${lang}" para ${rule.countryName} (${rule.taxAuthority}, moneda ${rule.currency}):
+Tema: ${topic || 'Declaración de impuestos'}
+Contexto de pregunta: ${questionContext || 'Ninguno'}
+Responde en máximo 4 frases claras, prácticas y con un ejemplo cotidiano.`
+        });
+        if (response.text) {
+          res.json({ ok: true, mode: 'GEMINI_AI', explanation: response.text.trim() });
+          return;
+        }
+      } catch {
+        // Fallback to deterministic plain-language guide below
+      }
+    }
+
+    const fallbackMap: Record<string, string> = {
+      en: `Simple guide for ${rule.countryName} (${rule.taxAuthority}): Report the total money you received in ${rule.currency} during the year, subtract allowed work/family expenses with receipts, and the system automatically fills ${rule.requiredForms.INDIVIDUAL[0] || 'your official return'}.`,
+      pt: `Guia simples para ${rule.countryName} (${rule.taxAuthority}): Informe o total recebido em ${rule.currency} no ano, desconte despesas com recibo (saúde, educação, operação) e o sistema preenche automaticamente seu formulário oficial.`,
+      fr: `Guide simple pour ${rule.countryName} (${rule.taxAuthority}) : Indiquez vos revenus totaux en ${rule.currency}, déduisez vos frais justifiés par reçu et le système remplit automatiquement votre déclaration.`,
+      es: `Guía súper simple para ${rule.countryName} (${rule.taxAuthority}): Solo indica cuánto dinero recibiste en el año en ${rule.currency} y qué gastos con recibo tuviste (médicos, educación, alquiler o negocio). El sistema hace todos los cálculos matemáticos y llena automáticamente el formulario oficial (${rule.requiredForms.INDIVIDUAL[0] || 'Declaración'}) sin que necesites saber contabilidad.`
+    };
+
+    res.json({
+      ok: true,
+      mode: 'AI_LOCAL_GUIDE',
+      explanation: fallbackMap[lang] || fallbackMap.es
+    });
   });
 
   // Listar pagos de afiliación registrados

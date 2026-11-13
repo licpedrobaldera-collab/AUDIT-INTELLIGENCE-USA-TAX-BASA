@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { UserRole, USState, ModalidadAfiliacion, User } from '../types';
+import { UserRole, USState, US_STATES, ModalidadAfiliacion, User } from '../types';
+import { GLOBAL_TAX_MATRIX, getJurisdictionRule } from '../services/globalTaxEngine';
 import {
   UserPlus,
   CheckCircle2,
@@ -14,7 +15,9 @@ import {
   LogIn,
   Search,
   Sparkles,
-  FileCheck2
+  FileCheck2,
+  Globe,
+  ArrowRight
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -73,12 +76,21 @@ export const RegistroView: React.FC = () => {
   const { registerUser, users, currentUser, login, systemBankAccount, navigate } = useApp();
 
   const [rol, setRol] = useState<UserRole>('CLIENTE');
+  const [paisJurisdiccion, setPaisJurisdiccion] = useState<string>('US');
+  const [customIsoCountry, setCustomIsoCountry] = useState<string>('');
   const [estado, setEstado] = useState<USState>('NY');
   const [nombre, setNombre] = useState('');
   const [email, setEmail] = useState('');
   const [telefono, setTelefono] = useState('');
   const [identificacion, setIdentificacion] = useState('');
   const [clave, setClave] = useState('');
+
+  const activeCountryCode =
+    customIsoCountry.trim().length >= 2
+      ? customIsoCountry.trim().toUpperCase()
+      : paisJurisdiccion;
+  const countryRule = useMemo(() => getJurisdictionRule(activeCountryCode), [activeCountryCode]);
+  const [realProdSyncId, setRealProdSyncId] = useState<string>('');
 
   // Contador / CPE / Firma fields
   const [licencia, setLicencia] = useState('');
@@ -164,9 +176,11 @@ export const RegistroView: React.FC = () => {
         : 'Pago único de afiliación ($50.00 USD) vía Pasarela Virtual antes de brindar el servicio.'
       : undefined;
 
+    const effectiveState = activeCountryCode === 'US' ? estado : activeCountryCode === 'DO' ? 'RD' : activeCountryCode;
     const res = registerUser({
       rol,
-      estado,
+      estado: effectiveState,
+      paisJurisdiccion: activeCountryCode,
       nombre,
       email: email || null,
       telefono: telefono || null,
@@ -198,10 +212,11 @@ export const RegistroView: React.FC = () => {
 
     if (res.success) {
       setShowCodeModal(false);
-      setCreatedUser({
+      const createdObj: User = {
         id: res.userId || `user-${Date.now()}`,
         rol,
-        estado,
+        estado: effectiveState,
+        paisJurisdiccion: activeCountryCode,
         nombre,
         email: email || null,
         telefono: telefono || null,
@@ -216,7 +231,58 @@ export const RegistroView: React.FC = () => {
         bancoTitular: null,
         activo: true,
         createdAt: new Date().toISOString()
-      });
+      };
+      setCreatedUser(createdObj);
+
+      // Sync to live production backend & save draft for /asistente step-by-step flow
+      const syncApp = async () => {
+        try {
+          const apiRes = await fetch('/api/production-applications', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              applicantName: nombre,
+              role: rol,
+              email: email || '',
+              phone: telefono || '',
+              countryCode: activeCountryCode,
+              language: countryRule.defaultLanguage,
+              currency: countryRule.currency,
+              entityType: rol === 'REPRESENTANTE_LEGAL' || rol === 'FIRMA' ? 'CORPORATE' : 'INDIVIDUAL',
+              currentStep: 2,
+              status: 'REGISTRO_REAL_ACTIVO',
+              complianceScore: 20
+            })
+          });
+          if (apiRes.ok) {
+            const data = await apiRes.json();
+            if (data.application?.id) {
+              setRealProdSyncId(data.application.id);
+              localStorage.setItem(
+                'audit_guided_assistant_draft_v1',
+                JSON.stringify({
+                  appRecordId: data.application.id,
+                  countryCode: activeCountryCode,
+                  language: countryRule.defaultLanguage,
+                  entityType: rol === 'REPRESENTANTE_LEGAL' || rol === 'FIRMA' ? 'CORPORATE' : 'INDIVIDUAL',
+                  role: rol,
+                  applicantName: nombre,
+                  email: email || '',
+                  phone: telefono || '',
+                  taxId: identificacion || '',
+                  currentStep: 2,
+                  isRealSynced: true,
+                  lastSavedTime: new Date().toLocaleTimeString()
+                })
+              );
+            }
+          }
+        } catch {
+          // ignore network error
+        }
+      };
+      void syncApp();
+
       setNombre('');
       setEmail('');
       setTelefono('');
@@ -393,18 +459,33 @@ export const RegistroView: React.FC = () => {
           </div>
 
           {createdUser && (
-            <div className="p-4 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-2xl text-xs space-y-2.5">
-              <div className="flex items-center gap-2 font-bold text-sm text-emerald-800">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                ¡Usuario {createdUser.rol} Registrado y Sesión Iniciada!
+            <div className="p-4 bg-emerald-50 border-2 border-emerald-400 text-emerald-900 rounded-2xl text-xs space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2 font-bold text-sm text-emerald-800">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                  ¡Usuario {createdUser.rol} Registrado en Producción!
+                </div>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-black">
+                  ● REGISTRO REAL ACTIVO {realProdSyncId ? `(${realProdSyncId})` : ''}
+                </span>
               </div>
               <div className="bg-white/90 rounded-xl p-3 border border-emerald-200 font-mono text-[11px] space-y-1">
                 <div><strong>Nombre:</strong> {currentUser?.nombre || createdUser.nombre}</div>
                 <div><strong>Rol Activo:</strong> {currentUser?.rol || createdUser.rol}</div>
+                <div><strong>País / Moneda:</strong> {countryRule.countryName} ({countryRule.currency} · {countryRule.defaultLanguage.toUpperCase()})</div>
                 {currentUser?.codigoCPA && <div><strong>Código Asignado:</strong> {currentUser.codigoCPA}</div>}
                 <div><strong>Acceso:</strong> {currentUser?.email || currentUser?.telefono || currentUser?.identificacion}</div>
               </div>
               <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => navigate('/asistente')}
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-xl shadow-md transition-colors cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Continuar Paso a Paso con IA (Paso 2/6)
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
                 <button
                   type="button"
                   onClick={() =>
@@ -418,7 +499,7 @@ export const RegistroView: React.FC = () => {
                         : '/tax'
                     )
                   }
-                  className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl transition-colors"
+                  className="px-4 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold rounded-xl transition-colors"
                 >
                   Ir a mi Panel ({createdUser.rol})
                 </button>
@@ -427,7 +508,7 @@ export const RegistroView: React.FC = () => {
                   onClick={() => setCreatedUser(null)}
                   className="px-3 py-2 bg-white border border-emerald-300 text-emerald-800 font-bold rounded-xl hover:bg-emerald-100"
                 >
-                  Registrar Otro Usuario
+                  Registrar Otro
                 </button>
               </div>
             </div>
@@ -502,25 +583,92 @@ export const RegistroView: React.FC = () => {
               </div>
             </div>
 
-            <div>
-              <label className="block font-bold text-slate-700 mb-1">
-                Estado / Jurisdicción Principal:
-              </label>
-              <select
-                value={estado}
-                onChange={e => setEstado(e.target.value as USState)}
-                className="w-full p-2.5 rounded-xl border border-slate-300 bg-slate-50 font-semibold text-slate-800"
-              >
-                <option value="NY">New York (NY)</option>
-                <option value="FL">Florida (FL)</option>
-                <option value="TX">Texas (TX)</option>
-                <option value="CA">California (CA)</option>
-                <option value="NJ">New Jersey (NJ)</option>
-                <option value="IL">Illinois (IL)</option>
-                <option value="GA">Georgia (GA)</option>
-                <option value="PR">Puerto Rico (PR)</option>
-                <option value="RD">República Dominicana (RD / Expat)</option>
-              </select>
+            {/* GLOBAL COUNTRY + STATE SELECTION + 6-STEP ROUTE PREVIEW */}
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                  <Globe className="w-4 h-4 text-blue-600" />
+                  2. País para el cual deseas registrarte *
+                </span>
+                <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-black">
+                  ● Producción Multi-País
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">País Principal *</label>
+                  <select
+                    value={paisJurisdiccion}
+                    onChange={e => {
+                      setCustomIsoCountry('');
+                      setPaisJurisdiccion(e.target.value);
+                    }}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-white font-bold text-slate-800"
+                  >
+                    {Object.values(GLOBAL_TAX_MATRIX).map(c => (
+                      <option key={c.countryCode} value={c.countryCode}>
+                        {c.countryName} ({c.countryCode} · {c.currency})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Otro País (Código ISO)</label>
+                  <input
+                    type="text"
+                    maxLength={3}
+                    value={customIsoCountry}
+                    onChange={e => setCustomIsoCountry(e.target.value)}
+                    placeholder="Ej: AU, CH, NL, UY"
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-white font-mono uppercase"
+                  />
+                </div>
+              </div>
+
+              {activeCountryCode === 'US' && (
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">Estado de EE.UU. (50 Estados + DC/PR):</label>
+                  <select
+                    value={estado}
+                    onChange={e => setEstado(e.target.value as USState)}
+                    className="w-full p-2.5 rounded-xl border border-slate-300 bg-white font-semibold text-slate-800"
+                  >
+                    {US_STATES.map(st => (
+                      <option key={st.code} value={st.code}>
+                        {st.name} ({st.code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="bg-white border border-blue-200 rounded-xl p-2.5 text-[11px] flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <span className="text-slate-500">Moneda & Idioma: </span>
+                  <strong className="font-mono text-slate-900">{countryRule.currency} · {countryRule.defaultLanguage.toUpperCase()}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-500">Organismo: </span>
+                  <strong className="text-blue-800">{countryRule.taxAuthority}</strong>
+                </div>
+              </div>
+
+              {/* Mini 6-Step Companion Route */}
+              <div className="pt-1">
+                <div className="text-[10px] font-bold text-slate-500 uppercase mb-1.5">
+                  Ruta de Acompañamiento (6 Pasos hasta Firma, Pago y Resultados):
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-1 text-[9px] font-bold text-center">
+                  <span className="px-1.5 py-1 rounded bg-emerald-600 text-white">1. Registro ✓</span>
+                  <span className="px-1.5 py-1 rounded bg-slate-200 text-slate-700">2. Evidencias</span>
+                  <span className="px-1.5 py-1 rounded bg-slate-200 text-slate-700">3. Preguntas IA</span>
+                  <span className="px-1.5 py-1 rounded bg-slate-200 text-slate-700">4. Audit 100</span>
+                  <span className="px-1.5 py-1 rounded bg-slate-200 text-slate-700">5. Firma</span>
+                  <span className="px-1.5 py-1 rounded bg-slate-200 text-slate-700">6. Pago/Fin</span>
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -868,14 +1016,17 @@ export const RegistroView: React.FC = () => {
                 >
                   <div className="space-y-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[9px] font-black">
+                        ● REGISTRO REAL
+                      </span>
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold border ${roleBadgeColor(u.rol)}`}>
                         {u.rol}
                       </span>
                       <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[10px] font-bold">
-                        {u.estado}
+                        {u.paisJurisdiccion || u.estado}
                       </span>
                       {isCurrent && (
-                        <span className="px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold">
+                        <span className="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[10px] font-bold">
                           ACTIVO AHORA
                         </span>
                       )}

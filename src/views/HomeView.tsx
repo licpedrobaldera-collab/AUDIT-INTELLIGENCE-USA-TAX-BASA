@@ -26,6 +26,14 @@ export const HomeView: React.FC = () => {
 
   const modules = [
     {
+      title: 'Asistente Guiado Fácil IA (6 Pasos — Sin Conocimientos)',
+      description: 'Registro real multi-país en producción, mapa visual de 6 pasos con autoguardado, módulo de evidencias, preguntas simples que llenan formularios en tu idioma/moneda, firma y resultados.',
+      route: '/asistente',
+      icon: Zap,
+      badge: '● Real 100/100',
+      color: 'bg-emerald-600',
+    },
+    {
       title: 'Radicar Caso Tributario ($150 USD)',
       description: 'Radicación de expedientes tributarios reales para todos los estados de USA. Carga de soportes, firma digital del contribuyente, cobro de $150 y asignación inmediata de CPA.',
       route: '/tax',
@@ -129,15 +137,22 @@ export const HomeView: React.FC = () => {
 
           <div className="pt-3 flex flex-wrap items-center gap-3">
             <button
+              onClick={() => navigate('/asistente')}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs shadow-md transition-colors cursor-pointer"
+            >
+              <Zap className="w-4 h-4 text-yellow-300" />
+              <span>Declaración Guiada IA (6 Pasos · Cualquier País)</span>
+            </button>
+            <button
               onClick={() => navigate('/registro')}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-colors cursor-pointer"
             >
               <UserPlus className="w-4 h-4" />
               <span>Registro Inicial (Cliente · CPA · CPE · Abogado · Rep. Legal)</span>
             </button>
             <button
               onClick={() => navigate('/login')}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition-colors"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition-colors cursor-pointer"
             >
               <LogIn className="w-4 h-4" />
               <span>Iniciar Sesión ({users.length} cuentas activas)</span>

@@ -17,6 +17,7 @@ import { RegistroView } from './views/RegistroView';
 import { GoogleDriveManagerView } from './views/GoogleDriveManagerView';
 import { PortalAutodinamicoView } from './views/PortalAutodinamicoView';
 import { GlobalTaxEngineView } from './views/GlobalTaxEngineView';
+import { AsistenteGuiadoView } from './views/AsistenteGuiadoView';
 
 import { ShieldCheck, Heart } from 'lucide-react';
 
@@ -40,6 +41,8 @@ const AppContent: React.FC = () => {
         return <TaxIntakeView />;
       case '/portal-ciudadano':
         return <PortalAutodinamicoView />;
+      case '/asistente':
+        return <AsistenteGuiadoView />;
       case '/global':
         return <GlobalTaxEngineView />;
       case '/cpa/dashboard':
