@@ -74,11 +74,11 @@ export const HomeView: React.FC = () => {
       color: 'bg-purple-600',
     },
     {
-      title: 'Acceso Seguro y Registro de Cuentas',
-      description: 'Portal de autenticación y alta de cuentas para Contribuyentes (Clientes), Contadores Públicos Autorizados (CPAs) y Despachos Contables.',
+      title: 'Registro Inicial de Usuarios por Rol',
+      description: 'Alta inmediata y directorio activo para Cliente, Contador (CPA), CPE / Enrolled Agent, Abogado Tributario y Representante Legal.',
       route: '/registro',
       icon: UserPlus,
-      badge: 'Clientes & CPAs',
+      badge: 'Clientes · CPA · CPE · Legal',
       color: 'bg-emerald-600',
     },
     {
@@ -125,6 +125,23 @@ export const HomeView: React.FC = () => {
             <span className="flex items-center gap-1.5 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700">
               <Zap className="w-4 h-4 text-yellow-400" /> Compatible API / Web / Streamlit
             </span>
+          </div>
+
+          <div className="pt-3 flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => navigate('/registro')}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-colors"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Registro Inicial (Cliente · CPA · CPE · Abogado · Rep. Legal)</span>
+            </button>
+            <button
+              onClick={() => navigate('/login')}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs border border-white/20 transition-colors"
+            >
+              <LogIn className="w-4 h-4" />
+              <span>Iniciar Sesión ({users.length} cuentas activas)</span>
+            </button>
           </div>
         </div>
       </div>

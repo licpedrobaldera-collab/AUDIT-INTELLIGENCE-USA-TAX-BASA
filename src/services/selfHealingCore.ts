@@ -1,4 +1,4 @@
-import { getJurisdictionRule } from './globalTaxEngine';
+import { getJurisdictionRule } from './globalTaxEngine.ts';
 
 export interface IncidentReport {
   incidentId: string;

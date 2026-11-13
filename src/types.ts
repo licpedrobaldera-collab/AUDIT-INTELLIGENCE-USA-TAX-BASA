@@ -1,4 +1,12 @@
-export type UserRole = 'CLIENTE' | 'CONTADOR' | 'FIRMA' | 'ADMIN' | 'DEV';
+export type UserRole =
+  | 'CLIENTE'
+  | 'CONTADOR'
+  | 'CPE'
+  | 'ABOGADO'
+  | 'REPRESENTANTE_LEGAL'
+  | 'FIRMA'
+  | 'ADMIN'
+  | 'DEV';
 
 export type CaseStatus = 'REALIZADA' | 'EN_TRAMITE' | 'APROBADA';
 
@@ -126,6 +134,13 @@ export interface User {
   contratoAfiliacionFecha?: string | null;
   clausulaFormaPagoTexto?: string;
   referenciaPagoAfiliacion?: string | null;
+  // Campos para CPE, Abogado y Representante Legal
+  colegiaturaAbogado?: string | null;
+  colegioEntidad?: string | null;
+  enlaceVerificacionOficial?: string | null;
+  empresaRepresentada?: string | null;
+  poderRepresentacionDoc?: string | null;
+  paisJurisdiccion?: string;
 }
 
 export interface SoporteDocumento {

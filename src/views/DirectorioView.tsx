@@ -16,7 +16,14 @@ import {
 export const DirectorioView: React.FC = () => {
   const { users, cases, navigate } = useApp();
 
-  const cpas = users.filter(u => u.rol === 'CONTADOR' || u.rol === 'FIRMA');
+  const cpas = users.filter(
+    u =>
+      u.rol === 'CONTADOR' ||
+      u.rol === 'CPE' ||
+      u.rol === 'FIRMA' ||
+      u.rol === 'ABOGADO' ||
+      u.rol === 'REPRESENTANTE_LEGAL'
+  );
 
   const [assignedSuccess, setAssignedSuccess] = useState<string | null>(null);
 

@@ -85,7 +85,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [users, setUsers] = useState<User[]>(() => {
     try {
       const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}users`);
-      return saved ? JSON.parse(saved) : INITIAL_USERS;
+      if (saved) {
+        const parsed = JSON.parse(saved) as User[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const existingIds = new Set(parsed.map(u => u.id));
+          const missingStarters = INITIAL_USERS.filter(u => !existingIds.has(u.id));
+          return missingStarters.length > 0 ? [...parsed, ...missingStarters] : parsed;
+        }
+      }
+      return INITIAL_USERS;
     } catch {
       return INITIAL_USERS;
     }
@@ -257,15 +265,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const login = (identificador: string, clave: string) => {
     const cleanId = identificador.trim().toLowerCase();
+    const digitsId = cleanId.replace(/\D/g, '');
     const user = users.find(u =>
       (u.email && u.email.toLowerCase() === cleanId) ||
-      (u.telefono && u.telefono.replace(/\D/g, '') === cleanId.replace(/\D/g, '')) ||
+      (u.telefono && digitsId.length >= 4 && u.telefono.replace(/\D/g, '') === digitsId) ||
       (u.identificacion && u.identificacion.toLowerCase() === cleanId) ||
-      (u.codigoCPA && u.codigoCPA.toLowerCase() === cleanId)
+      (u.codigoCPA && u.codigoCPA.toLowerCase() === cleanId) ||
+      (u.licencia && u.licencia.toLowerCase() === cleanId) ||
+      (u.colegiaturaAbogado && u.colegiaturaAbogado.toLowerCase() === cleanId)
     );
 
     if (!user) {
-      return { success: false, message: 'Usuario no encontrado con ese Email, Teléfono, Cédula o Código CPA.' };
+      return { success: false, message: 'Usuario no encontrado con ese Email, Teléfono, Cédula, Licencia o Código.' };
     }
 
     if (user.claveHash !== clave) {
@@ -273,10 +284,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     setCurrentUser(user);
-    if (user.rol === 'CONTADOR') {
+    if (user.rol === 'CONTADOR' || user.rol === 'CPE') {
       navigate('/cpa/dashboard');
     } else if (user.rol === 'ADMIN' || user.rol === 'DEV') {
       navigate('/admin/matriz');
+    } else if (user.rol === 'ABOGADO' || user.rol === 'REPRESENTANTE_LEGAL') {
+      navigate('/global');
+    } else if (user.rol === 'FIRMA') {
+      navigate('/directorio');
     } else {
       navigate('/tax');
     }
@@ -294,8 +309,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     if (target) {
       setCurrentUser(target);
-      if (role === 'CONTADOR') navigate('/cpa/dashboard');
+      if (role === 'CONTADOR' || role === 'CPE') navigate('/cpa/dashboard');
       else if (role === 'ADMIN' || role === 'DEV') navigate('/admin/matriz');
+      else if (role === 'ABOGADO' || role === 'REPRESENTANTE_LEGAL') navigate('/global');
       else if (role === 'CLIENTE') navigate('/tax');
       else if (role === 'FIRMA') navigate('/directorio');
     }
@@ -311,13 +327,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return { success: false, error: 'Email, Teléfono o Identificación es requerido.' };
     }
 
-    const state = userData.estado || 'NY';
-    let cpaCode: string | null = null;
-    if (userData.rol === 'CONTADOR' || userData.rol === 'FIRMA') {
-      cpaCode = userData.codigoCPA || `CPA-${state}-${Math.floor(10000 + Math.random() * 90000)}`;
+    if (userData.email) {
+      const existsEmail = users.some(u => u.email && u.email.toLowerCase() === userData.email!.trim().toLowerCase());
+      if (existsEmail) {
+        return { success: false, error: `Ya existe un usuario registrado con el email ${userData.email}.` };
+      }
     }
 
-    const isCpaOrFirm = userData.rol === 'CONTADOR' || userData.rol === 'FIRMA';
+    const rol = userData.rol || 'CLIENTE';
+    const state = userData.estado || 'NY';
+    let credCode: string | null = null;
+    if (rol === 'CONTADOR' || rol === 'FIRMA') {
+      credCode = userData.codigoCPA || `CPA-${state}-${Math.floor(10000 + Math.random() * 90000)}`;
+    } else if (rol === 'CPE') {
+      credCode = userData.codigoCPA || `CPE-${state}-${Math.floor(10000 + Math.random() * 90000)}`;
+    } else if (rol === 'ABOGADO') {
+      credCode = userData.codigoCPA || `ABG-${state}-${Math.floor(10000 + Math.random() * 90000)}`;
+    } else if (rol === 'REPRESENTANTE_LEGAL') {
+      credCode = userData.codigoCPA || `REP-${state}-${Math.floor(10000 + Math.random() * 90000)}`;
+    }
+
+    const isCpaOrFirm = rol === 'CONTADOR' || rol === 'FIRMA' || rol === 'CPE';
     const modalidadInicial = userData.modalidadAfiliacion;
     const estadoAfiliacionInicial = isCpaOrFirm
       ? userData.estadoAfiliacion || (modalidadInicial === 'RETENCION_PRIMEROS_INGRESOS' ? 'AUTORIZADO_RETENCION' : 'PENDIENTE')
@@ -325,22 +355,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const newUser: User = {
       id: `user-${Date.now()}`,
-      rol: userData.rol || 'CLIENTE',
-      email: userData.email || null,
-      telefono: userData.telefono || null,
-      identificacion: userData.identificacion || null,
+      rol,
+      email: userData.email ? userData.email.trim() : null,
+      telefono: userData.telefono ? userData.telefono.trim() : null,
+      identificacion: userData.identificacion ? userData.identificacion.trim() : null,
       claveHash: userData.claveHash || '12345678',
-      nombre: userData.nombre || 'Nuevo Usuario',
+      nombre: userData.nombre?.trim() || 'Nuevo Usuario',
       estado: state,
-      codigoCPA: cpaCode,
-      licencia: userData.licencia || (userData.rol === 'CONTADOR' ? `${state}-CPA-${Math.floor(10000 + Math.random() * 90000)}` : null),
-      ptin: userData.ptin || (userData.rol === 'CONTADOR' ? `P00${Math.floor(100000 + Math.random() * 900000)}` : null),
-      bancoNombre: userData.bancoNombre || (userData.rol === 'CONTADOR' ? 'Chase Bank' : null),
-      bancoNumero: userData.bancoNumero || (userData.rol === 'CONTADOR' ? `****${Math.floor(1000 + Math.random() * 9000)}` : null),
-      bancoRouting: userData.bancoRouting || (userData.rol === 'CONTADOR' ? '021000021' : null),
+      codigoCPA: credCode,
+      licencia:
+        userData.licencia ||
+        (rol === 'CONTADOR'
+          ? `${state}-CPA-${Math.floor(10000 + Math.random() * 90000)}`
+          : rol === 'CPE'
+          ? `${state}-CPE-${Math.floor(10000 + Math.random() * 90000)}`
+          : rol === 'ABOGADO'
+          ? userData.colegiaturaAbogado || `EXQ-${Math.floor(10000 + Math.random() * 90000)}`
+          : null),
+      ptin: userData.ptin || (rol === 'CONTADOR' || rol === 'CPE' ? `P00${Math.floor(100000 + Math.random() * 900000)}` : null),
+      bancoNombre: userData.bancoNombre || (isCpaOrFirm ? 'Chase Bank' : null),
+      bancoNumero: userData.bancoNumero || (isCpaOrFirm ? `****${Math.floor(1000 + Math.random() * 9000)}` : null),
+      bancoRouting: userData.bancoRouting || (isCpaOrFirm ? '021000021' : null),
       bancoTitular: userData.bancoTitular || userData.nombre || null,
       activo: true,
       createdAt: new Date().toISOString(),
+      colegiaturaAbogado: userData.colegiaturaAbogado || null,
+      colegioEntidad: userData.colegioEntidad || null,
+      enlaceVerificacionOficial: userData.enlaceVerificacionOficial || null,
+      empresaRepresentada: userData.empresaRepresentada || null,
+      poderRepresentacionDoc: userData.poderRepresentacionDoc || null,
+      paisJurisdiccion: userData.paisJurisdiccion || (state === 'RD' ? 'DO' : 'US'),
       ...(isCpaOrFirm
         ? {
             estadoAfiliacion: estadoAfiliacionInicial,

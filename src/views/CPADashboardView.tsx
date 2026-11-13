@@ -56,7 +56,7 @@ export const CPADashboardView: React.FC = () => {
 
   // Active CPA user details (resolved from live users state so affiliation updates immediately)
   const cpaUser =
-    (currentUser && (currentUser.rol === 'CONTADOR' || currentUser.rol === 'FIRMA')
+    (currentUser && (currentUser.rol === 'CONTADOR' || currentUser.rol === 'CPE' || currentUser.rol === 'FIRMA')
       ? users.find(u => u.id === currentUser.id) || currentUser
       : users.find(u => u.rol === 'CONTADOR')) || {
       id: 'user-cpa-ny-01',

@@ -77,7 +77,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCambiarClave }) => {
           {/* Quick Access Switcher */}
           <div className="flex items-center gap-2">
             <span className="text-slate-400 font-medium hidden md:inline">Acceso rol:</span>
-            <div className="flex items-center gap-1 bg-slate-900 px-1 py-0.5 rounded-md border border-slate-700">
+            <div className="flex flex-wrap items-center gap-1 bg-slate-900 px-1 py-0.5 rounded-md border border-slate-700">
+              <button
+                onClick={() => switchRoleDemo('CLIENTE')}
+                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                  currentUser?.rol === 'CLIENTE' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                }`}
+                title="Cliente Contribuyente"
+              >
+                CLIENTE
+              </button>
               <button
                 onClick={() => switchRoleDemo('CONTADOR', 'user-cpa-ny-01')}
                 className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
@@ -88,6 +97,33 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCambiarClave }) => {
                 CPA
               </button>
               <button
+                onClick={() => switchRoleDemo('CPE')}
+                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                  currentUser?.rol === 'CPE' ? 'bg-cyan-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                }`}
+                title="CPE / Enrolled Agent"
+              >
+                CPE
+              </button>
+              <button
+                onClick={() => switchRoleDemo('ABOGADO')}
+                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                  currentUser?.rol === 'ABOGADO' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                }`}
+                title="Abogado Tributario"
+              >
+                ABOGADO
+              </button>
+              <button
+                onClick={() => switchRoleDemo('REPRESENTANTE_LEGAL')}
+                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
+                  currentUser?.rol === 'REPRESENTANTE_LEGAL' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                }`}
+                title="Representante Legal"
+              >
+                REP. LEGAL
+              </button>
+              <button
                 onClick={() => switchRoleDemo('ADMIN')}
                 className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
                   currentUser?.rol === 'ADMIN' ? 'bg-amber-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
@@ -95,15 +131,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCambiarClave }) => {
                 title="Administrador General"
               >
                 ADMIN
-              </button>
-              <button
-                onClick={() => switchRoleDemo('CLIENTE')}
-                className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all ${
-                  currentUser?.rol === 'CLIENTE' ? 'bg-emerald-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
-                }`}
-                title="Cliente Contribuyente"
-              >
-                CLIENTE
               </button>
             </div>
 
@@ -167,28 +194,50 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCambiarClave }) => {
           </nav>
 
           {/* User Profile / Auth Area */}
-          <div className="hidden sm:flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2">
+            <button
+              onClick={() => navigate('/registro')}
+              className={`inline-flex items-center gap-1 px-2.5 py-1.5 text-[11px] font-bold rounded-lg transition-colors ${
+                activeRoute === '/registro'
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-emerald-600/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-600 hover:text-white'
+              }`}
+              title="Registrar Cliente, CPA, CPE, Abogado o Representante Legal"
+            >
+              <UserPlus className="w-3.5 h-3.5" />
+              <span className="hidden xl:inline">Registro</span>
+            </button>
+
             {currentUser ? (
               <div className="flex items-center gap-2">
                 <div className="text-right">
                   <div className="text-xs font-bold text-white flex items-center justify-end gap-1.5">
-                    <span>{currentUser.nombre}</span>
+                    <span className="max-w-[140px] truncate">{currentUser.nombre}</span>
                     <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded font-bold uppercase ${
                       currentUser.rol === 'ADMIN'
                         ? 'bg-amber-500/30 text-amber-300 border border-amber-500/40'
-                        : currentUser.rol === 'CONTADOR'
+                        : currentUser.rol === 'CONTADOR' || currentUser.rol === 'CPE'
                         ? 'bg-blue-500/30 text-blue-300 border border-blue-500/40'
+                        : currentUser.rol === 'ABOGADO' || currentUser.rol === 'REPRESENTANTE_LEGAL'
+                        ? 'bg-purple-500/30 text-purple-300 border border-purple-500/40'
                         : 'bg-emerald-500/30 text-emerald-300 border border-emerald-500/40'
                     }`}>
                       {currentUser.rol}
                     </span>
                   </div>
-                  <div className="text-[11px] text-slate-400 font-mono">
+                  <div className="text-[11px] text-slate-400 font-mono truncate max-w-[180px]">
                     {currentUser.codigoCPA || currentUser.email || currentUser.telefono}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1 bg-slate-800 p-1 rounded-lg border border-slate-700">
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 rounded-md transition-colors"
+                    title="Cambiar de Usuario / Login"
+                  >
+                    <LogIn className="w-4 h-4" />
+                  </button>
                   <button
                     onClick={onOpenCambiarClave}
                     className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-700 rounded-md transition-colors"
@@ -212,12 +261,6 @@ export const Navbar: React.FC<NavbarProps> = ({ onOpenCambiarClave }) => {
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:text-white hover:bg-slate-800 rounded-lg transition-colors"
                 >
                   <LogIn className="w-4 h-4" /> Entrar
-                </button>
-                <button
-                  onClick={() => navigate('/registro')}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm"
-                >
-                  <UserPlus className="w-4 h-4" /> Registrarse
                 </button>
               </div>
             )}
